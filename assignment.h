@@ -15,8 +15,9 @@ public:
     std::string get_title() const { return title; }
     std::string get_description() const { return description; }
     std::string get_course() const { return course; }
-    Date get_due_date() const { return due_date; }
-    Date get_available_date() const { return available; }
+    std::string get_due() const;
+    std::string get_available() const;
+    Date get_due_date() const;
     bool completed() const { return complete; }
     void set_title(std::string new_title ) { title = new_title; }
     void set_description(std::string new_description ) { description = new_description; }
@@ -26,8 +27,9 @@ public:
     void print() const;
     void set_due_date(Date d) { due_date = d; }
     void set_available_date(Date d) { available = d; }
-    bool operator<(Assignment);
-    bool operator>(Assignment);
+    bool operator<(const Assignment&) const;
+    bool past() const;
+    bool is_available() const;
 private:
     unsigned long long id;
     bool complete;
