@@ -1,6 +1,7 @@
 #include "commands.h"
 #include "interface.h"
 #include <iostream>
+#include <iterator>
 
 using namespace std;
 
@@ -18,7 +19,7 @@ void run_console()
     while (getline(cin, input))
     {
         args.erase(args.begin(), args.end());
-        string err = split(input, args);
+        string err = split(input, back_inserter(args));
         if (err.size() == 0)
             eval(args);
         else 
@@ -28,7 +29,8 @@ void run_console()
     }
 }
 
-string split(const string& s, vector<string>& res)
+template <class Out>
+string split(const string& s, Out os)
 {
     string::const_iterator it = s.begin();
     while ( it < s.end())
@@ -47,7 +49,8 @@ string split(const string& s, vector<string>& res)
 
             string chunk;
             copy(it + 1, jt, back_inserter(chunk));
-            res.push_back(chunk);
+            // res.push_back(chunk);
+            *os++ = chunk;
             it = jt + 1;
         }
         else
@@ -59,7 +62,8 @@ string split(const string& s, vector<string>& res)
             {
                 string chunk;
                 copy(it, jt, back_inserter(chunk));
-                res.push_back(chunk);
+                // res.push_back(chunk);
+                *os++ = chunk;
             }
             
             it = jt + 1;

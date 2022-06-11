@@ -4,7 +4,8 @@
 #include <vector>
 #include <string>
 
-std::string split(const std::string&, std::vector<std::string>&);
+
+template <class Out> std::string split(const std::string&, Out);
 void eval(const std::vector<std::string>&);
 void run_console();
 
