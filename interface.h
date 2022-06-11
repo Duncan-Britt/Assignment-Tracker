@@ -3,10 +3,17 @@
 
 #include <vector>
 #include <string>
+#include "tracker.h"
 
-
-template <class Out> std::string split(const std::string&, Out);
-void eval(const std::vector<std::string>&);
-void run_console();
+class Interface
+{
+public:
+    template <class Out> static std::string split(const std::string&, Out, int(int));
+    void run_console();
+    void eval(const std::vector<std::string>&);
+    Interface(Tracker a) : assignments(a) {}
+private:
+    Tracker assignments;
+};
 
 #endif

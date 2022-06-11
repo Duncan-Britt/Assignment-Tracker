@@ -9,8 +9,8 @@ class Assignment
 typedef struct tm Date;    
 
 public: 
-    Assignment(std::string t, std::string d, std::string c, Date due, Date a)
-    : title(t), description(d), course(c), due_date(due), available(a) {}
+    Assignment(unsigned long long i, bool tf, std::string t, std::string d, std::string c, Date due, Date a)
+    : id(i), complete(tf), title(t), description(d), course(c), due_date(due), available(a) {}
     unsigned long long get_id() const { return id; }
     std::string get_title() const { return title; }
     std::string get_description() const { return description; }
@@ -29,13 +29,13 @@ public:
     bool operator<(Assignment);
     bool operator>(Assignment);
 private:
+    unsigned long long id;
+    bool complete;
     std::string title;
     std::string description;
     std::string course;
     Date due_date;
     Date available;
-    bool complete;
-    unsigned long long id;
 };
 
 std::ostream& operator<<(std::ostream&, const Assignment&);

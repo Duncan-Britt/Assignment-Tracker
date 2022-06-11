@@ -2,7 +2,10 @@
 #include <ctime>
 #include "interface.h"
 #include "assignment.h"
-// #include "assignments.h"
+#include "tracker.h"
+#include <fstream>
+#include <sstream>
+#include <iterator>
 
 using namespace std;
 
@@ -18,7 +21,17 @@ int main(int argc, char** argv)
     // for (int i = 0; i < argc; ++i)
     //     cout << argv[i] << endl;
 
-    run_console();
+    ifstream ifs("data.txt");
+    Tracker assignments;
+    assignments.read(ifs);
 
-    return 0;
+    Interface app(assignments);
+
+    if (argc == 1) 
+    {
+        app.run_console();
+        return 0;
+    }
+
+    
 }
