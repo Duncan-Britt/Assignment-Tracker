@@ -7,15 +7,35 @@
 #include <algorithm>
 #include <iterator>
 #include <regex>
+#include <fstream>
 
 using namespace std;
 
 typedef struct tm Date;
-typedef std::vector<Assignment>::const_iterator iter;
+typedef vector<Assignment>::const_iterator iter;
 
 int isdash(int c)
 {
     return c == '-';
+}
+
+bool Tracker::completed() const
+{
+    for (iter b = data.begin(); b < data.end(); ++b)
+    {
+        if (!b->completed())
+            return false;
+    }
+    return true;
+}
+
+Assignment Tracker::next() const
+{ 
+    for (vector<Assignment>::size_type i = 0; i < data.size(); ++i)
+        if (!data[i].completed())
+            return data[i];
+
+    throw runtime_error("No next assignment!");
 }
 
 void Tracker::read_date(const string& s, Date& d)
@@ -63,6 +83,13 @@ void Tracker::read(ifstream& in)
     }
 
     sort(data.begin(), data.end());
+
+    next_id = 0;
+    for (vector<Assignment>::const_iterator it = data.begin(); it < data.end(); ++it)
+    {
+        next_id = next_id > it->get_id() ? next_id : it->get_id();
+    }
+    ++next_id;
 }
 
 string::size_type Tracker::width(string attr(const Assignment&)) const
@@ -90,9 +117,9 @@ void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_
         return;
     }
 
-    Options options;
+    ShowOptions options;
     options.limit = data.size();
-    show_read_args(arg_it, arg_end, options);
+    read_args_show(arg_it, arg_end, options);
 
     vector<iter> assignments_to_display; 
     get_assignments(options, assignments_to_display);
@@ -121,14 +148,36 @@ bool Tracker::is_num(const string& s)
     return regex_match(s, regex("[0-9]+"));
 }
 
-void Tracker::show_read_args(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end, Options& options) const
+void Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::const_iterator e, AddInfo& info) const
+{
+    info.title = *b++;
+    info.description = *b++;
+    read_date(*b++, info.due);
+    while (b != e)
+    {
+        if (*b == "course") 
+        {
+            ++b;
+            info.course = *b++;
+        }
+        else if (*b == "available")
+        {
+            ++b;
+            read_date(*b++, info.available);
+        }
+        else
+            throw runtime_error("Invalid Args");
+    }
+}
+
+void Tracker::read_args_show(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end, ShowOptions& options) const
 {
     while (arg_it != arg_end) 
     {
         if (*arg_it == "past") 
             options.show_past = true;
 
-        if (is_date(*arg_it))
+        if (is_date(*arg_it)) // COULD USE read_date() ?
         {
             options.limit_date = true;
             vector<string> date_components; 
@@ -174,7 +223,7 @@ void Tracker::show_read_args(vector<string>::const_iterator arg_it, vector<strin
     }
 }
 
-void Tracker::get_assignments(const Options& options, vector<iter>& assignments) const
+void Tracker::get_assignments(const ShowOptions& options, vector<iter>& assignments) const
 {
     vector<Assignment> reversed;
     iter b;
@@ -265,9 +314,24 @@ void Tracker::format_print(vector<iter>& assignments) const
     cout << endl << endl;
 }
 
+void Tracker::write() const
+{
+    ofstream ofs("data.txt");
+    for(vector<Assignment>::const_iterator it = data.begin(); it < data.end(); ++it)
+    {
+        ofs << it->get_id() << ' ' << it->completed() << " \"" << it->get_title() << '\"'
+            << " \"" << it->get_description() << "\" \"" << it->get_course() << "\" "
+            << it->get_due() << ' ' << it->get_available() << endl;
+    }
+}
+
 void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterator e) 
 {
+    AddInfo info;
+    read_args_add(b, e, info);
 
+    data.push_back(Assignment(next_id++, false, info.title, info.description, info.course, info.due, info.available));
+    write();
 }
 
 void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_iterator e) 

@@ -9,7 +9,7 @@
 #include <ctime>
 #include <string>
 
-typedef struct Options {
+typedef struct ShowOptions {
     bool show_past = false;
     bool show_todo = true;
     bool show_done = true;
@@ -20,7 +20,16 @@ typedef struct Options {
     std::vector<Assignment>::size_type offset = 0;
     bool limit_date = false;
     struct tm date_limit;
-} Options;
+} ShowOptions;
+
+typedef struct AddInfo {
+    std::string title;
+    std::string description;
+    struct tm due;
+    std::string course = "";
+    time_t now = time(NULL);
+    struct tm available = *localtime(&now);
+} AddInfo;
 
 class Tracker
 {
@@ -38,11 +47,17 @@ public:
     void i(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
     static bool is_date(const std::string&);
     static bool is_num(const std::string&);
+    bool completed() const;
+    Assignment next() const;
+
 private:
+    void write() const;
+    unsigned long long next_id = 0;
     std::string::size_type width(std::string(const Assignment&)) const;
     std::vector<Assignment> data;
-    void get_assignments(const Options&, std::vector<std::vector<Assignment>::const_iterator>&) const;
-    void show_read_args(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator, Options&) const;
+    void get_assignments(const ShowOptions&, std::vector<std::vector<Assignment>::const_iterator>&) const;
+    void read_args_show(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator, ShowOptions&) const;
+    void read_args_add(std::vector<std::string>::const_iterator b, std::vector<std::string>::const_iterator e, AddInfo& info) const;
     void format_print(std::vector<std::vector<Assignment>::const_iterator>&) const;
     static bool before(const struct tm&, const struct tm&);
     static void read_date(const std::string&, struct tm& d);    

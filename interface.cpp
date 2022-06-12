@@ -2,18 +2,37 @@
 #include <iostream>
 #include <iterator>
 #include <cctype>
+#include <ctime>
+#include <map>
 
 using namespace std;
+
+int days_from_now(struct tm date)
+{
+    time_t now = time(NULL);
+    struct tm* today = localtime(&now);
+    mktime(&date); // needed to populate date with unfilled tm_yday
+
+    return (date.tm_year * 365 + date.tm_yday) - (today->tm_year * 365 + today->tm_yday);
+}
 
 void Interface::run_console()
 {
     cout << "\nAssignment Tracker (0.9.0)\n"
             "Copyright (C) 2022 Duncan Britt\n\n"
-            "Welcome. You're next assignment is due in " 
-         << assignments.next. <<" days.\n"
-            "Enter i to display instructions. Enter ctr + c to quit.\n\n";
-
-    cout << "AT (0.9.0)> ";
+            "Welcome.";
+    if (!assignments.completed()) 
+    {
+        cout << " You're next assignment is due in " 
+             << days_from_now(assignments.next().get_due_date()) <<" days.\n";
+    }
+    else
+    {
+        cout << endl;
+    }
+                
+    cout << "Enter i to display instructions. Enter ctr + c to quit.\n\n"
+         << "AT (0.9.0)> ";
 
     string input;
     vector<string> args;
