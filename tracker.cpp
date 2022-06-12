@@ -8,6 +8,7 @@
 #include <iterator>
 #include <regex>
 #include <fstream>
+#include <map>
 
 using namespace std;
 
@@ -449,5 +450,122 @@ void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterato
 
 void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator e) 
 {
+    if (b == e)
+        cout << " Command | Description\n"
+                "---------+---------------------\n"
+                "    show | dipslays assignments\n"
+                "     add | add new assignment\n"
+                "    edit | edit assignment info\n"
+                "  remove | remove assignment\n"
+                "complete | mark complete\n"
+                "      lc | list courses\n"
+                "      dc | delete course\n"
+                "    quit | end program\n\n"
+                "Enter i [command] for more detailed info on a command i.e. |> i show\n\n";
+    else
+    {
+        static const string SHOW = "===============================================\n"
+                                   "command argment (either | or) [ optional ] DATA\n"
+                                   "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
+                                   "Display assignments using:\n"
+                                   "show [ past ] [ N ] [ MM-DD-YYYY ] [ asc | desc ] [ offset N ]\n"
+                                   "     [ (todo | done) ] [ course name ] [ available ]\n\n"
+                                
+                                   "past\n"
+                                   "        View past assignments.\n\n"
+                                   "N\n"
+                                   "        View the first N assignments from your query.\n"
+                                   "        Must be an integer.\n\n"
+                                   "MM-DD-YYYY\n"
+                                   "        View assignments due up until specified date.\n\n"
+                                   "asc\n"
+                                   "        View results in ascending order, by due date.\n" 
+                                   "        This is dones by default, and is therefore redundant.\n\n"
+                                   "desc\n"
+                                   "        View results in descending order, by due date.\n\n"
+                                   "offset N\n"
+                                   "        Skip the first N results. N must be an integer.\n\n"
+                                   "todo\n"
+                                   "        View only unfinished assignments.\n\n"
+                                   "done\n"
+                                   "        View only completed assignments\n\n"
+                                   "course NAME\n"
+                                   "        View only assignments due for a course\n\n"
+                                   "available\n"
+                                   "        Filter out unavailable assignments.\n\n"
+
+                                   "i.e.\n"
+                                   "        show\n"
+                                   "        show past 5 desc\n"
+                                   "        show course \"CSC 1061\" 07-01-2022\n"
+                                   "        show done offset 4\n\n";
+
+        static const string ADD = "===============================================\n"
+                                  "command argment (either | or) [ optional ] DATA\n"
+                                  "\"Multi word arguments must be enclose in quotes.\"\n\n"
+
+                                  "Add new assignment using:\n"
+                                  "add TITLE DESCRIPTION MM-DD-YYYY [ course NAME ] [ available MM-DD-YYYY ]\n\n"
+
+                                  "available MM-DD-YYYY defaults to today.\n\n"
+
+                                  "i.e.\n"
+                                  "        add \"CH 13 HW\" \"Study the chain rule\" 06-20-2022\n"
+                                  "            course \"CALC 201\" available 06-13-2022\n\n"
+
+                                  "        add \"M2 Paper\" \"On Ancient Rome\" 06-20-2022\n"
+                                  "            course \"HIST 320\"\n\n";
+
+
+        static const string EDIT = "===============================================\n"
+                                   "command argment (either | or) [ optional ] DATA\n"
+                                   "\"Multi word arguments must be enclose in quotes.\"\n\n"
+
+                                   "Update an assignment's info using:\n"
+                                   "edit ID [ title NAME ] [ description \"NEW DESCRIPTION\" ]\n"
+                                   "     [ due MM-DD-YYYY ] [ course NAME ] [ available MM-DD-YYYY ]\n"
+                                   "     [ (complete | incomplete) ]\n\n"
+
+                                   "i.e.\n"
+                                   "        edit 25 due 08-01-2022\n"
+                                   "        edit 9 complete\n\n";
+
+        static const string REMOVE = "===============================================\n"
+                                     "command argment (either | or) [ optional ] DATA\n"
+                                     "\"Multi word arguments must be enclose in quotes.\"\n\n"
+
+                                     "Delete an assignment using:\n"
+                                     "remove ID\n\n"
+
+                                     "i.e.\n"
+                                     "          remove 4\n\n";
+
+        static const string COMPLETE = "===============================================\n"
+                                       "command argment (either | or) [ optional ] DATA\n"
+                                       "\"Multi word arguments must be enclose in quotes.\"\n\n"
+
+                                       "Mark assignment complete using:\n"
+                                       "complete ID\n\n"
+
+                                       "i.e.\n"
+                                        "       complete 10\n\n";
+
+        static const string LC = "";
+        static const string DC = "";
+        static const string QUIT = "";
+
+        static map<string, string> command_info = {
+            {"show", SHOW},
+            {"add", ADD},
+            {"edit", EDIT},
+            {"remove", REMOVE},
+            {"complete", COMPLETE},
+            {"lc", LC},
+            {"dc", DC},
+            {"quit", QUIT}
+        };
+        
+        cout << command_info[*b] << endl;
+    }
 }

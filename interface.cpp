@@ -112,6 +112,8 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
         assignments.lc(b, e);
     else if (command == "dc")
         assignments.dc(b, e);
+    else if (command == "i")
+        assignments.i(b, e);
     else
         cout << "command not found: " << command << endl;
 }
