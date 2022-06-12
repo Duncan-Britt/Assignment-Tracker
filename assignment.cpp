@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdio.h>
 
-using std::string;
+using namespace std;
 
 typedef struct tm Date;
 
@@ -16,11 +16,6 @@ void make_date_now(Date& res)
     time_t now;
     now = time(NULL);
     res = *localtime(&now);
-}
-
-Date Assignment::get_due_date() const
-{
-    return due_date;
 }
 
 // REFACTOR DATE STUFF, CODE REUSE
@@ -82,5 +77,6 @@ string Assignment::get_available() const
 
 std::ostream& operator<<(std::ostream& out, const Assignment& assignment)
 {
-    return out << assignment.get_course() << " " << assignment.get_title();
+    return out << assignment.get_course() << " " << assignment.get_title()
+               << endl << assignment.get_description();
 }

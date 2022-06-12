@@ -36,7 +36,7 @@ class Tracker
 
 public:
     void read(std::ifstream&);
-    void show(const unsigned long long&) const;
+    void show(unsigned long long) const;
     void show(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator) const;
     void add(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
     void edit(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);

@@ -17,7 +17,8 @@ public:
     std::string get_course() const { return course; }
     std::string get_due() const;
     std::string get_available() const;
-    Date get_due_date() const;
+    Date get_available_date() const { return available; }
+    Date get_due_date() const { return due_date; }
     bool completed() const { return complete; }
     void set_title(std::string new_title ) { title = new_title; }
     void set_description(std::string new_description ) { description = new_description; }

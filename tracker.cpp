@@ -104,11 +104,6 @@ string::size_type Tracker::width(string attr(const Assignment&)) const
     return maxlen;
 }
 
-void Tracker::show(const unsigned long long& id) const
-{
-
-}
-
 void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
 {
     if (*arg_it == "id")
@@ -336,17 +331,110 @@ void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterat
 
 void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_iterator e) 
 {
+    vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) { 
+        return a.get_id() == stoi(*b); 
+    });
+    if (it == data.end())
+    {
+        cout << "No assignment found with id: " << *b << endl;
+        return;
+    }
 
+    ++b;
+    
+    while (b != e)
+    {
+        if (*b == "course")
+        {
+            ++b;
+            it->set_course(*b);
+        }
+        else if (*b == "title")
+        {
+            ++b;
+            it->set_title(*b);
+        }
+        else if (*b == "description")
+        {
+            ++b;
+            it->set_description(*b);
+        }
+        else if (*b == "due")
+        {
+            ++b;
+            Date date;
+            read_date(*b, date);
+            it->set_due_date(date);
+        }
+        else if (*b == "available")
+        {
+            ++b;
+            Date date;
+            read_date(*b, date);
+            it->set_due_date(date);
+        }
+        else if (*b == "complete")
+        {
+            it->mark_complete();
+        }
+        else if (*b == "incomplete")
+        {
+            it->set_complete(false);
+        }
+        else
+        {
+            cout << "Unkown command: " << *b << endl;
+            return;
+        }
+
+        ++b;
+    }
+
+    write();
+}
+
+void Tracker::show(unsigned long long id) const
+{
+    vector<Assignment>::const_iterator it = find_if(data.begin(), data.end(), [id](Assignment a) { 
+        return a.get_id() == id; 
+    });
+    if (it == data.end())
+    {
+        cout << "No assignment found with id: " << id << endl;
+        return;
+    }  
+
+    cout << endl << *it << endl << endl;
 }
 
 void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_iterator e) 
 {
+    vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) { 
+        return a.get_id() == stoi(*b); 
+    });
+    if (it == data.end())
+    {
+        cout << "No assignment found with id: " << *b << endl;
+        return;
+    }
 
+    data.erase(it);
+    write();
 }
 
 void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_iterator e) 
 {
+    vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) { 
+        return a.get_id() == stoi(*b); 
+    });
+    if (it == data.end())
+    {
+        cout << "No assignment found with id: " << *b << endl;
+        return;
+    }
 
+    it->mark_complete();
+    write();
 }
 
 void Tracker::lc(vector<string>::const_iterator b, vector<string>::const_iterator e) 
