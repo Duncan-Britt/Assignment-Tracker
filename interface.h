@@ -10,7 +10,7 @@ class Interface
 public:
     template <class Out> static std::string split(const std::string&, Out, int(int));
     void run_console();
-    void eval(const std::vector<std::string>&);
+    void eval(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
     Interface(Tracker a) : assignments(a) {}
 private:
     Tracker assignments;

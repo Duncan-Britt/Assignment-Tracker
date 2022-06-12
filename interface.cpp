@@ -9,7 +9,8 @@ void Interface::run_console()
 {
     cout << "\nAssignment Tracker (0.9.0)\n"
             "Copyright (C) 2022 Duncan Britt\n\n"
-            "Welcome. You have 7 upcoming assignments.\n" // assignments.due
+            "Welcome. You're next assignment is due in " 
+         << assignments.next. <<" days.\n"
             "Enter i to display instructions. Enter ctr + c to quit.\n\n";
 
     cout << "AT (0.9.0)> ";
@@ -21,7 +22,7 @@ void Interface::run_console()
         args.erase(args.begin(), args.end());
         string err = Interface::split(input, back_inserter(args), isspace);
         if (err.size() == 0)
-            eval(args);
+            eval(args.begin(), args.end());
         else 
             cout << err << endl;
 
@@ -71,14 +72,12 @@ string Interface::split(const string& s, Out os, int p(int))
     return "";
 }
 
-void Interface::eval(const vector<string>& args)
+void Interface::eval(vector<string>::const_iterator b, vector<string>::const_iterator e)
 {
-    if (args.size() == 0)
+    if (b == e)
         return;
 
-    string command = args[0];
-    vector<string>::const_iterator b = args.begin() + 1;
-    vector<string>::const_iterator e = args.end();
+    string command = *b++;
     
     if (command == "show")
         assignments.show(b, e);

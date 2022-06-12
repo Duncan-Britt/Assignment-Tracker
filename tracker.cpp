@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "tracker.h"
 #include "interface.h"
 #include <string>
@@ -10,10 +11,23 @@
 using namespace std;
 
 typedef struct tm Date;
+typedef std::vector<Assignment>::const_iterator iter;
 
 int isdash(int c)
 {
     return c == '-';
+}
+
+void Tracker::read_date(const string& s, Date& d)
+{
+    vector<string> date_components; 
+        string err = Interface::split(s, back_inserter(date_components), isdash);
+        if (err.size() != 0)
+            throw runtime_error(err);
+
+    d.tm_year = stoi(date_components[2]) - 1900;
+    d.tm_mday = stoi(date_components[1]);
+    d.tm_mon = stoi(date_components[0]) - 1;
 }
 
 void Tracker::read(ifstream& in)
@@ -23,6 +37,7 @@ void Tracker::read(ifstream& in)
     while (getline(in, s)) 
     {
         istringstream iss(s);
+
         unsigned long long id;
         bool done;
         string title;
@@ -33,51 +48,16 @@ void Tracker::read(ifstream& in)
 
         iss >> id >> done;
 
-        string temp;
-        string word;
-
-        iss >> word;
-        temp = word;
-        ;
-        while (word.back() != '\"') {
-            iss >> word;
-            temp += " " + word;
-        }
-        copy(temp.begin()+1, temp.end()-1, back_inserter(title));
-
-        iss >> word;
-        temp = word;
-        while (word.back() != '\"') {
-            iss >> word;
-            temp += " " + word;
-        }
-        copy(temp.begin()+1, temp.end()-1, back_inserter(description));
-
-        iss >> word;
-        temp = word;
-        while (word.back() != '\"') {
-            iss >> word;
-            temp += " " + word;
-        }
-        copy(temp.begin()+1, temp.end()-1, back_inserter(course));
+        read_quoted(iss, back_inserter(title));
+        read_quoted(iss, back_inserter(description));
+        read_quoted(iss, back_inserter(course));
         
         iss >> due_str >> available_str;
 
-        vector<string> date_components; 
-        string err = Interface::split(due_str, back_inserter(date_components), isdash);
-
         Date due;
-        due.tm_year = stoi(date_components[2]) - 1900;
-        due.tm_mday = stoi(date_components[1]);
-        due.tm_mon = stoi(date_components[0]) - 1;
-
-        vector<string> available_components; 
-        string err2 = Interface::split(available_str, back_inserter(available_components), isdash);
-
-        Date available;
-        available.tm_year = stoi(available_components[2]) - 1900;
-        available.tm_mday = stoi(available_components[1]);
-        available.tm_mon = stoi(available_components[0]) - 1;
+        Date available;        
+        read_date(due_str, due);
+        read_date(available_str, available);
 
         data.push_back(Assignment(id, done, title, description, course, due, available));
     }
@@ -88,7 +68,7 @@ void Tracker::read(ifstream& in)
 string::size_type Tracker::width(string attr(const Assignment&)) const
 {
     string::size_type maxlen = 0;
-    for (vector<Assignment>::const_iterator it = data.begin(); it < data.end(); ++it)
+    for (iter it = data.begin(); it < data.end(); ++it)
     {
         string::size_type len = attr(*it).size();
         maxlen = len > maxlen ? len : maxlen;
@@ -102,8 +82,25 @@ void Tracker::show(const unsigned long long& id) const
 
 }
 
-// NEED A PLACE FOR THESEE FUNCTIONS
-bool before(const Date& a, const Date& b)
+void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
+{
+    if (*arg_it == "id")
+    {
+        show(stoi(*(++arg_it)));
+        return;
+    }
+
+    Options options;
+    options.limit = data.size();
+    show_read_args(arg_it, arg_end, options);
+
+    vector<iter> assignments_to_display; 
+    get_assignments(options, assignments_to_display);
+
+    format_print(assignments_to_display);
+}
+
+bool Tracker::before(const Date& a, const Date& b)
 {
     if (a.tm_year == b.tm_year)
         if (a.tm_mon == b.tm_mon)
@@ -114,99 +111,75 @@ bool before(const Date& a, const Date& b)
         return a.tm_year < b.tm_year;
 }
 
-bool is_date(const string& s)
+bool Tracker::is_date(const string& s)
 {
     return regex_match(s, regex("[0-9]{2}-[0-9]{2}-[0-9]{4}"));
 }
 
-bool is_num(const string& s)
+bool Tracker::is_num(const string& s)
 {
     return regex_match(s, regex("[0-9]+"));
 }
 
-void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
+void Tracker::show_read_args(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end, Options& options) const
 {
-    if (*arg_it == "id")
-    {
-        show(stoi(*(++arg_it)));
-        return;
-    }
-
-    // FILTER
-    bool show_past = false;
-    bool show_todo = true;
-    bool show_done = true;
-    bool show_unavailable = true;
-    string show_course = "all";
-
-    // ORDER
-    bool show_descending = false;
-
-    // RANGE
-    vector<Assignment>::size_type limit = data.size();
-    bool limit_date = false;
-    Date date_limit;
-    vector<Assignment>::size_type offset = 0;
-
     while (arg_it != arg_end) 
     {
         if (*arg_it == "past") 
-            show_past = true;
+            options.show_past = true;
 
         if (is_date(*arg_it))
         {
-            limit_date = true;
+            options.limit_date = true;
             vector<string> date_components; 
             string err = Interface::split(*arg_it, back_inserter(date_components), isdash);
-            date_limit.tm_year = stoi(date_components[2]) - 1900;
-            date_limit.tm_mday = stoi(date_components[1]);
-            date_limit.tm_mon = stoi(date_components[0]) - 1;
+            options.date_limit.tm_year = stoi(date_components[2]) - 1900;
+            options.date_limit.tm_mday = stoi(date_components[1]);
+            options.date_limit.tm_mon = stoi(date_components[0]) - 1;
         }
 
         if (is_num(*arg_it))
         {
-            limit = stoi(*arg_it);
+            options.limit = stoi(*arg_it);
         }
 
         if (*arg_it == "todo")
-            show_done = false;
+            options.show_done = false;
 
         if (*arg_it == "done")
-            show_todo = false;
+            options.show_todo = false;
 
         if (*arg_it == "available")
-            show_unavailable = false;
+            options.show_unavailable = false;
 
         if (*arg_it == "desc")
-            show_descending = true;
+            options.show_descending = true;
 
-        if (*arg_it == "asc") // REDUNDANT
-            show_descending = false;
+        if (*arg_it == "asc") // DEFAULT
+            options.show_descending = false;
 
         if (*arg_it == "course")
         {
             ++arg_it;
-            show_course = *arg_it;
+            options.show_course = *arg_it;
         }
 
         if (*arg_it == "offset")
         {
             ++arg_it;
-            offset = stoi(*arg_it);
+            options.offset = stoi(*arg_it);
         }
 
-        cout << *arg_it << " "; // DEBUGGING
         ++arg_it;
     }
-    cout << endl;
+}
 
-    typedef vector<Assignment>::const_iterator iter;
-    vector<iter> assignments_to_display; 
-
+void Tracker::get_assignments(const Options& options, vector<iter>& assignments) const
+{
     vector<Assignment> reversed;
     iter b;
     iter e;
-    if (show_descending)
+    if (options.show_descending)
     {
         reverse_copy(data.begin(), data.end(), back_inserter(reversed));
         b = reversed.begin();
@@ -217,32 +190,34 @@ void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_
         b = data.begin();
         e = data.end();
     }
-    
+
     vector<Assignment>::size_type count = 0;
+    
+    vector<Assignment>::size_type offset = options.offset;
 
-    for (; b != e && count < limit; ++b)
+    for (; b != e && count < options.limit; ++b)
     {
-        if (b->past() && !show_past)
+        if (b->past() && !options.show_past)
             continue;
 
-        if (show_past && !b->past())
+        if (options.show_past && !b->past())
             continue;
         
-        if (!show_done && b->completed())
+        if (!options.show_done && b->completed())
             continue;
 
-        if (!show_todo && !b->completed())
+        if (!options.show_todo && !b->completed())
             continue;
 
-        if (!show_unavailable && !b->is_available())
+        if (!options.show_unavailable && !b->is_available())
             continue;
         
-        if (show_course != "all" && show_course != b->get_course())
+        if (options.show_course != "all" && options.show_course != b->get_course())
             continue;
 
-        if (limit_date)
-            if (!show_descending && before(date_limit, b->get_due_date()) 
-                || show_descending && before(b->get_due_date(), date_limit))
+        if (options.limit_date)
+            if (!options.show_descending && before(options.date_limit, b->get_due_date()) 
+                || options.show_descending && before(b->get_due_date(), options.date_limit))
                 break;
 
         if (offset > 0) 
@@ -251,10 +226,13 @@ void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_
             continue;
         }
 
-        assignments_to_display.push_back(b);
+        assignments.push_back(b);
         ++count;
     }
+}
 
+void Tracker::format_print(vector<iter>& assignments) const
+{
     const string::size_type TITLE_WIDTH = max(width([](const Assignment& a){ return a.get_title(); }), string("Title").size());
     const string::size_type COURSE_WIDTH = max(width([](const Assignment& a){ return a.get_course(); }), string("Course").size());
     const string::size_type DATE_WIDTH = 10;
@@ -271,7 +249,7 @@ void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_
          << '+' << string(DATE_WIDTH + 2, '-') << '+'
          << string(2 + string("Complete").size(), '-') << endl;
 
-    for (vector<iter>::const_iterator it = assignments_to_display.begin(); it < assignments_to_display.end(); ++it)
+    for (vector<iter>::const_iterator it = assignments.begin(); it < assignments.end(); ++it)
     {
         string title = (*it)->get_title();
         string course = (*it)->get_course();
