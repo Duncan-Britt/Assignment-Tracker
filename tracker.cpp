@@ -531,9 +531,15 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
     }
 }
 
-void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterator e) 
+void Tracker::dc(const string& course_name) 
 {
+    data.erase(
+        remove_if(data.begin(), data.end(), [course_name](const Assignment& a) { return a.get_course() == course_name; }), 
+        data.end());
 
+    for (vector<Assignment>::const_iterator it = data.begin(); it != data.end(); ++it)
+        cout << *it << endl << endl;
+    write();
 }
 
 void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator e) 
@@ -656,8 +662,20 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                  "      lc a\n"
                                  "      lc p\n\n";                               
 
-        static const string DC = "";
-        static const string QUIT = "";
+        static const string DC = "===============================================\n"
+                                 "command argment (either | or) [ optional ] DATA\n"
+                                 "\"Multi word arguments must be enclose in quotes.\"\n\n"
+
+                                 "Delete all assignments for a given course using:\n"
+                                 "      dc COURSE\n\n"
+
+                                 "i.e.\n"
+                                 "      dc CALC 2001\n\n";
+
+        static const string QUIT = "===============================================\n"
+                                   "End program using:\n"
+                                   "      quit\n\n"
+                                   "Or end of file (control+d)\n\n";
 
         static map<string, string> command_info = {
             {"show", SHOW},

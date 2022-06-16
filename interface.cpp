@@ -41,7 +41,11 @@ void Interface::run_console()
         args.erase(args.begin(), args.end());
         string err = Interface::split(input, back_inserter(args), isspace);
         if (err.size() == 0)
+        {
+            if (*args.begin() == "quit")
+                break;
             eval(args.begin(), args.end());
+        }
         else 
             cout << err << endl;
 
@@ -111,7 +115,7 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
     else if (command == "lc")
         assignments.lc(b, e);
     else if (command == "dc")
-        assignments.dc(b, e);
+        assignments.dc(*b);
     else if (command == "i")
         assignments.i(b, e);
     else
