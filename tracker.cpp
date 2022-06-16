@@ -105,6 +105,18 @@ string::size_type Tracker::width(string attr(const Assignment&)) const
     return maxlen;
 }
 
+string::size_type Tracker::width(vector<Assignment*>::const_iterator b, vector<Assignment*>::const_iterator e, string attr(const Assignment*)) const
+{
+    string::size_type maxlen = 0;
+    for (; b < e; ++b)
+    {
+        string::size_type len = attr(*b).size();
+        maxlen = len > maxlen ? len : maxlen;
+    }
+
+    return maxlen;
+}
+
 void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
 {
     if (*arg_it == "id")
@@ -327,6 +339,7 @@ void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterat
     read_args_add(b, e, info);
 
     data.push_back(Assignment(next_id++, false, info.title, info.description, info.course, info.due, info.available));
+    sort(data.begin(), data.end());
     write();
 }
 
@@ -391,6 +404,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
         ++b;
     }
 
+    sort(data.begin(), data.end());
     write();
 }
 
@@ -435,12 +449,86 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
     }
 
     it->mark_complete();
+    sort(data.begin(), data.end());
     write();
 }
 
-void Tracker::lc(vector<string>::const_iterator b, vector<string>::const_iterator e) 
+void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<std::string>::const_iterator e_args)
 {
+    map<string, Assignment*> courses;
+    string::size_type max_course_name_len = 0;
 
+    for (Assignment& a : data) // Map course to next relevant assignment  
+    {
+        if (courses.count(a.get_course()) == 1) // Course in map already
+        {
+            if (courses[a.get_course()]->past() && !a.past()) // existing assignment under course map is past, but assignment a is not
+                courses[a.get_course()] = &a;
+            else if (courses[a.get_course()]->past() == a.past() && // both are not past or both are past, && a is before
+                     before(a.get_due_date(), courses[a.get_course()]->get_due_date())) 
+            {
+                courses[a.get_course()] = &a;
+            }
+        }
+        else
+        {
+            courses[a.get_course()] = &a;
+        }
+    }
+
+    vector<Assignment*> partitioned_assignments; // Make vector of <Assignment*> from distinct course map values
+    transform(courses.begin(), courses.end(), back_inserter(partitioned_assignments), [](const pair<string, Assignment*>& p) { 
+        return p.second; 
+    });
+
+    sort(partitioned_assignments.begin(), partitioned_assignments.end(), [](Assignment* a, Assignment* b) {
+        return *a < *b;
+    });
+
+    vector<Assignment*>::const_iterator upcoming = find_if(partitioned_assignments.begin(), partitioned_assignments.end(), [](const Assignment* a) {
+        return !a->past();
+    });
+
+    if (b_args == e_args || *b_args == "a") // if show current courses
+    {
+        const string::size_type UPCOMING_COURSE_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a){ return a->get_course(); }), string("Course").size());
+        const string::size_type NEXT_ASSIGNMENT_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a){ return a->get_title(); }), string("Next Assignment").size());
+        const string::size_type DUE_IN_WIDTH = max(
+            width(upcoming, partitioned_assignments.end(), 
+                 [](const Assignment* a)
+                 {
+                     return to_string(days_from_now(a->get_due_date())) + " days";
+                 }), 
+            string("Due in").size()
+        );
+
+        cout << endl << " Course" << string(UPCOMING_COURSE_WIDTH - string("Course").size(), ' ') << " | "
+             << "Next Assignment" << string(NEXT_ASSIGNMENT_WIDTH - string("Next Assignment").size(), ' ') << " | "
+             << "Due in" << endl;
+        
+        cout << string(UPCOMING_COURSE_WIDTH + 2, '-') << '+' << string(NEXT_ASSIGNMENT_WIDTH + 2, '-') << '+'
+             << string(DUE_IN_WIDTH + 2, '-') << endl;
+
+        for (vector<Assignment*>::const_iterator it = upcoming; it != partitioned_assignments.end(); ++it)
+        {
+            const string course = (*it)->get_course();
+            const string title = (*it)->get_title();
+            const string due_in = to_string(days_from_now((*it)->get_due_date())) + " days";
+
+            cout << " " << string(UPCOMING_COURSE_WIDTH - course.size(), ' ') << course << " | "
+                 << string(NEXT_ASSIGNMENT_WIDTH - title.size(), ' ') << title << " | "
+                 << string(DUE_IN_WIDTH - due_in.size(), ' ') << due_in << endl;
+        }
+    }
+    
+    if (*b_args == "a" || *b_args == "p") // if show past courses
+    {
+        cout << endl << " Past courses:" << endl;
+        for (vector<Assignment*>::const_iterator it = partitioned_assignments.begin(); it != upcoming; ++it)
+            cout << "   " << (*it)->get_course() << endl;
+        
+        cout << endl;
+    }
 }
 
 void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterator e) 
@@ -469,8 +557,8 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                    "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                    "Display assignments using:\n"
-                                   "show [ past ] [ N ] [ MM-DD-YYYY ] [ asc | desc ] [ offset N ]\n"
-                                   "     [ (todo | done) ] [ course name ] [ available ]\n\n"
+                                   "    show [ past ] [ N ] [ MM-DD-YYYY ] [ asc | desc ] [ offset N ]\n"
+                                   "         [ (todo | done) ] [ course name ] [ available ]\n\n"
                                 
                                    "past\n"
                                    "        View past assignments.\n\n"
@@ -523,9 +611,9 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                    "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                    "Update an assignment's info using:\n"
-                                   "edit ID [ title NAME ] [ description \"NEW DESCRIPTION\" ]\n"
-                                   "     [ due MM-DD-YYYY ] [ course NAME ] [ available MM-DD-YYYY ]\n"
-                                   "     [ (complete | incomplete) ]\n\n"
+                                   "    edit ID [ title NAME ] [ description \"NEW DESCRIPTION\" ]\n"
+                                   "         [ due MM-DD-YYYY ] [ course NAME ] [ available MM-DD-YYYY ]\n"
+                                   "         [ (complete | incomplete) ]\n\n"
 
                                    "i.e.\n"
                                    "        edit 25 due 08-01-2022\n"
@@ -551,7 +639,23 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                        "i.e.\n"
                                         "       complete 10\n\n";
 
-        static const string LC = "";
+        static const string LC = "===============================================\n"
+                                 "command argment (either | or) [ optional ] DATA\n"
+                                 "\"Multi word arguments must be enclose in quotes.\"\n\n"
+                                 
+                                 "List courses using:\n"
+                                 "      lc [ (a | p) ]\n\n"
+
+                                 "a\n"
+                                 "        View all courses.\n\n"
+                                 "p\n"
+                                 "        View past courses.\n\n"
+
+                                 "i.e.\n"
+                                 "      lc\n"
+                                 "      lc a\n"
+                                 "      lc p\n\n";                               
+
         static const string DC = "";
         static const string QUIT = "";
 

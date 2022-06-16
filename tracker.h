@@ -54,13 +54,15 @@ private:
     void write() const;
     unsigned long long next_id = 0;
     std::string::size_type width(std::string(const Assignment&)) const;
+    std::string::size_type width(std::vector<Assignment*>::const_iterator, std::vector<Assignment*>::const_iterator, std::string(const Assignment*)) const;
     std::vector<Assignment> data;
     void get_assignments(const ShowOptions&, std::vector<std::vector<Assignment>::const_iterator>&) const;
     void read_args_show(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator, ShowOptions&) const;
     void read_args_add(std::vector<std::string>::const_iterator b, std::vector<std::string>::const_iterator e, AddInfo& info) const;
     void format_print(std::vector<std::vector<Assignment>::const_iterator>&) const;
     static bool before(const struct tm&, const struct tm&);
-    static void read_date(const std::string&, struct tm& d);    
+    static void read_date(const std::string&, struct tm& d);   
+
     template<class In, class Out>
     static void read_quoted(In& in, Out out)
     {

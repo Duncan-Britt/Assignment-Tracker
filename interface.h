@@ -16,4 +16,6 @@ private:
     Tracker assignments;
 };
 
+int days_from_now(struct tm);
+
 #endif
