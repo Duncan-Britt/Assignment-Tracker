@@ -561,7 +561,7 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
     else
     {
         static const string LIST = "===============================================\n"
-                                   "command argment (either | or) [ optional ] DATA\n"
+                                   "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
                                    "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                    "Display assignments using:\n"
@@ -598,18 +598,18 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                    "        list done offset 4\n\n";
         
         static const string SHOW = "===============================================\n"
-                                   "command argment (either | or) [ optional ] DATA\n"
+                                   "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
                                    "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                    "Display details for one or more assignments using:\n"
-                                   "    show ID [...ID]\n\n"
+                                   "    show (...ID)\n\n"
 
                                    "i.e.\n"
                                    "        show 1\n"
                                    "        show 1 5 8\n\n";
 
         static const string ADD = "===============================================\n"
-                                  "command argment (either | or) [ optional ] DATA\n"
+                                  "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
                                   "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                   "Add new assignment using:\n"
@@ -626,7 +626,7 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
 
 
         static const string EDIT = "===============================================\n"
-                                   "command argment (either | or) [ optional ] DATA\n"
+                                   "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
                                    "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                    "Update an assignment's info using:\n"
@@ -639,7 +639,7 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                    "        edit 9 complete\n\n";
 
         static const string REMOVE = "===============================================\n"
-                                     "command argment (either | or) [ optional ] DATA\n"
+                                     "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
                                      "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                      "Delete an assignment using:\n"
@@ -649,7 +649,7 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                      "          remove 4\n\n";
 
         static const string COMPLETE = "===============================================\n"
-                                       "command argment (either | or) [ optional ] DATA\n"
+                                       "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
                                        "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                        "Mark assignment complete using:\n"
@@ -659,7 +659,7 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                         "       complete 10\n\n";
 
         static const string LC = "===============================================\n"
-                                 "command argment (either | or) [ optional ] DATA\n"
+                                 "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
                                  "\"Multi word arguments must be enclose in quotes.\"\n\n"
                                  
                                  "List courses using:\n"
@@ -676,7 +676,7 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                  "      lc p\n\n";                               
 
         static const string DC = "===============================================\n"
-                                 "command argment (either | or) [ optional ] DATA\n"
+                                 "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
                                  "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                  "Delete all assignments for a given course using:\n"
