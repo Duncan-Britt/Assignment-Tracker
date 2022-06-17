@@ -13,7 +13,8 @@ public:
     : id(i), complete(tf), title(t), description(d), course(c), due_date(due), available(a) {}
     unsigned long long get_id() const { return id; }
     std::string get_title() const { return title; }
-    std::string get_description() const { return description; }
+    std::string get_description() const { return description == "" ? "No description" : description; }
+    std::string _get_description() const { return description; }
     std::string get_course() const { return course; }
     std::string get_due() const;
     std::string get_available() const;

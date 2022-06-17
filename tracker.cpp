@@ -117,17 +117,11 @@ string::size_type Tracker::width(vector<Assignment*>::const_iterator b, vector<A
     return maxlen;
 }
 
-void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
+void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
 {
-    if (*arg_it == "id")
-    {
-        show(stoi(*(++arg_it)));
-        return;
-    }
-
     ShowOptions options;
     options.limit = data.size();
-    read_args_show(arg_it, arg_end, options);
+    read_args_list(arg_it, arg_end, options);
 
     vector<iter> assignments_to_display; 
     get_assignments(options, assignments_to_display);
@@ -178,12 +172,12 @@ void Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
     }
 }
 
-void Tracker::read_args_show(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end, ShowOptions& options) const
+void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end, ShowOptions& options) const
 {
     while (arg_it != arg_end) 
     {
         if (*arg_it == "past") 
-            options.show_past = true;
+            options.list_past = true;
 
         if (is_date(*arg_it)) // COULD USE read_date() ?
         {
@@ -201,24 +195,24 @@ void Tracker::read_args_show(vector<string>::const_iterator arg_it, vector<strin
         }
 
         if (*arg_it == "todo")
-            options.show_done = false;
+            options.list_done = false;
 
         if (*arg_it == "done")
-            options.show_todo = false;
+            options.list_todo = false;
 
         if (*arg_it == "available")
-            options.show_unavailable = false;
+            options.list_unavailable = false;
 
         if (*arg_it == "desc")
-            options.show_descending = true;
+            options.list_descending = true;
 
         if (*arg_it == "asc") // DEFAULT
-            options.show_descending = false;
+            options.list_descending = false;
 
         if (*arg_it == "course")
         {
             ++arg_it;
-            options.show_course = *arg_it;
+            options.list_course = *arg_it;
         }
 
         if (*arg_it == "offset")
@@ -236,7 +230,7 @@ void Tracker::get_assignments(const ShowOptions& options, vector<iter>& assignme
     vector<Assignment> reversed;
     iter b;
     iter e;
-    if (options.show_descending)
+    if (options.list_descending)
     {
         reverse_copy(data.begin(), data.end(), back_inserter(reversed));
         b = reversed.begin();
@@ -254,27 +248,27 @@ void Tracker::get_assignments(const ShowOptions& options, vector<iter>& assignme
 
     for (; b != e && count < options.limit; ++b)
     {
-        if (b->past() && !options.show_past)
+        if (b->past() && !options.list_past)
             continue;
 
-        if (options.show_past && !b->past())
+        if (options.list_past && !b->past())
             continue;
         
-        if (!options.show_done && b->completed())
+        if (!options.list_done && b->completed())
             continue;
 
-        if (!options.show_todo && !b->completed())
+        if (!options.list_todo && !b->completed())
             continue;
 
-        if (!options.show_unavailable && !b->is_available())
+        if (!options.list_unavailable && !b->is_available())
             continue;
         
-        if (options.show_course != "all" && options.show_course != b->get_course())
+        if (options.list_course != "all" && options.list_course != b->get_course())
             continue;
 
         if (options.limit_date)
-            if (!options.show_descending && before(options.date_limit, b->get_due_date()) 
-                || options.show_descending && before(b->get_due_date(), options.date_limit))
+            if (!options.list_descending && before(options.date_limit, b->get_due_date()) 
+                || options.list_descending && before(b->get_due_date(), options.date_limit))
                 break;
 
         if (offset > 0) 
@@ -328,7 +322,7 @@ void Tracker::write() const
     for(vector<Assignment>::const_iterator it = data.begin(); it < data.end(); ++it)
     {
         ofs << it->get_id() << ' ' << it->completed() << " \"" << it->get_title() << '\"'
-            << " \"" << it->get_description() << "\" \"" << it->get_course() << "\" "
+            << " \"" << it->_get_description() << "\" \"" << it->get_course() << "\" "
             << it->get_due() << ' ' << it->get_available() << endl;
     }
 }
@@ -405,7 +399,14 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
     }
 
     sort(data.begin(), data.end());
+    cout << "WRITE CALLED" << endl; // DEBUGGING
     write();
+}
+
+void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
+{
+    while (arg_it != arg_end)
+        show(stoi(*arg_it++));
 }
 
 void Tracker::show(unsigned long long id) const
@@ -489,7 +490,7 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
         return !a->past();
     });
 
-    if (b_args == e_args || *b_args == "a") // if show current courses
+    if (b_args == e_args || *b_args == "a") // if list current courses
     {
         const string::size_type UPCOMING_COURSE_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a){ return a->get_course(); }), string("Course").size());
         const string::size_type NEXT_ASSIGNMENT_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a){ return a->get_title(); }), string("Next Assignment").size());
@@ -521,7 +522,7 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
         }
     }
     
-    if (*b_args == "a" || *b_args == "p") // if show past courses
+    if (*b_args == "a" || *b_args == "p") // if list past courses
     {
         cout << endl << " Past courses:" << endl;
         for (vector<Assignment*>::const_iterator it = partitioned_assignments.begin(); it != upcoming; ++it)
@@ -547,7 +548,8 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
     if (b == e)
         cout << " Command | Description\n"
                 "---------+---------------------\n"
-                "    show | dipslays assignments\n"
+                "    list | dipslays assignments\n"
+                "    show | displays an assignment\n"
                 "     add | add new assignment\n"
                 "    edit | edit assignment info\n"
                 "  remove | remove assignment\n"
@@ -555,15 +557,15 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                 "      lc | list courses\n"
                 "      dc | delete course\n"
                 "    quit | end program\n\n"
-                "Enter i [command] for more detailed info on a command i.e. |> i show\n\n";
+                "Enter i [command] for more detailed info on a command i.e. |> i list\n\n";
     else
     {
-        static const string SHOW = "===============================================\n"
+        static const string LIST = "===============================================\n"
                                    "command argment (either | or) [ optional ] DATA\n"
                                    "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                    "Display assignments using:\n"
-                                   "    show [ past ] [ N ] [ MM-DD-YYYY ] [ asc | desc ] [ offset N ]\n"
+                                   "    list [ past ] [ N ] [ MM-DD-YYYY ] [ asc | desc ] [ offset N ]\n"
                                    "         [ (todo | done) ] [ course name ] [ available ]\n\n"
                                 
                                    "past\n"
@@ -590,17 +592,28 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                    "        Filter out unavailable assignments.\n\n"
 
                                    "i.e.\n"
-                                   "        show\n"
-                                   "        show past 5 desc\n"
-                                   "        show course \"CSC 1061\" 07-01-2022\n"
-                                   "        show done offset 4\n\n";
+                                   "        list\n"
+                                   "        list past 5 desc\n"
+                                   "        list course \"CSC 1061\" 07-01-2022\n"
+                                   "        list done offset 4\n\n";
+        
+        static const string SHOW = "===============================================\n"
+                                   "command argment (either | or) [ optional ] DATA\n"
+                                   "\"Multi word arguments must be enclose in quotes.\"\n\n"
+
+                                   "Display details for one or more assignments using:\n"
+                                   "    show ID [...ID]\n\n"
+
+                                   "i.e.\n"
+                                   "        show 1\n"
+                                   "        show 1 5 8\n\n";
 
         static const string ADD = "===============================================\n"
                                   "command argment (either | or) [ optional ] DATA\n"
                                   "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                   "Add new assignment using:\n"
-                                  "add TITLE DESCRIPTION MM-DD-YYYY [ course NAME ] [ available MM-DD-YYYY ]\n\n"
+                                  "    add TITLE DESCRIPTION MM-DD-YYYY [ course NAME ] [ available MM-DD-YYYY ]\n\n"
 
                                   "available MM-DD-YYYY defaults to today.\n\n"
 
@@ -678,6 +691,7 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                    "Or end of file (control+d)\n\n";
 
         static map<string, string> command_info = {
+            {"list", LIST},
             {"show", SHOW},
             {"add", ADD},
             {"edit", EDIT},

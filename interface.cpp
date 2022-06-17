@@ -31,7 +31,7 @@ void Interface::run_console()
         cout << endl;
     }
                 
-    cout << "Enter i to display instructions. Enter ctr + c to quit.\n\n"
+    cout << "Enter i to display instructions. Enter quit or ctr + d to quit.\n\n"
          << "AT (0.9.0)> ";
 
     string input;
@@ -102,8 +102,10 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
 
     string command = *b++;
     
-    if (command == "show")
-        assignments.show(b, e);
+    if (command == "list")
+        assignments.list(b, e);
+    else if (command == "show")
+        assignments.show(b, e); // allow multiple ids
     else if (command == "add")
         assignments.add(b, e);
     else if (command == "edit")

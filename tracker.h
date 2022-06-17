@@ -10,12 +10,12 @@
 #include <string>
 
 typedef struct ShowOptions {
-    bool show_past = false;
-    bool show_todo = true;
-    bool show_done = true;
-    bool show_unavailable = true;
-    std::string show_course = "all";
-    bool show_descending = false;
+    bool list_past = false;
+    bool list_todo = true;
+    bool list_done = true;
+    bool list_unavailable = true;
+    std::string list_course = "all";
+    bool list_descending = false;
     std::vector<Assignment>::size_type limit;
     std::vector<Assignment>::size_type offset = 0;
     bool limit_date = false;
@@ -36,8 +36,9 @@ class Tracker
 
 public:
     void read(std::ifstream&);
-    void show(unsigned long long) const;
     void show(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator) const;
+    void show(unsigned long long) const;
+    void list(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator) const;
     void add(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
     void edit(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
     void remove(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
@@ -57,7 +58,7 @@ private:
     std::string::size_type width(std::vector<Assignment*>::const_iterator, std::vector<Assignment*>::const_iterator, std::string(const Assignment*)) const;
     std::vector<Assignment> data;
     void get_assignments(const ShowOptions&, std::vector<std::vector<Assignment>::const_iterator>&) const;
-    void read_args_show(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator, ShowOptions&) const;
+    void read_args_list(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator, ShowOptions&) const;
     void read_args_add(std::vector<std::string>::const_iterator b, std::vector<std::string>::const_iterator e, AddInfo& info) const;
     void format_print(std::vector<std::vector<Assignment>::const_iterator>&) const;
     static bool before(const struct tm&, const struct tm&);
