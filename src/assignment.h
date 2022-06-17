@@ -26,7 +26,6 @@ public:
     void set_course(std::string new_course) { course = new_course; }
     void mark_complete() { complete = true; }
     void set_complete(bool status) { complete = status; }
-    void print() const;
     void set_due_date(Date d) { due_date = d; }
     void set_available_date(Date d) { available = d; }
     bool operator<(const Assignment&) const;

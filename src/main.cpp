@@ -13,7 +13,7 @@ using namespace std;
 
 int main(int argc, char** argv) 
 {
-    ifstream ifs("data.txt");
+    ifstream ifs("../data/data.txt");
     Tracker assignments;
     assignments.read(ifs);
 
