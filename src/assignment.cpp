@@ -73,6 +73,6 @@ string Assignment::get_available() const
 std::ostream& operator<<(std::ostream& out, const Assignment& assignment)
 {
     return out << assignment.get_course() << " " << assignment.get_title() 
-               << " " << (assignment.completed() ? "✅" : "❌")
+               << " " << (assignment.completed() ? "Complete" : "Incomplete")
                << endl << assignment.get_description();
 }

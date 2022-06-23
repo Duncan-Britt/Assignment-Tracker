@@ -10,17 +10,15 @@ using namespace std;
 int days_from_now(struct tm date)
 {
     time_t now = time(NULL);
-    struct tm* today = localtime(&now);
-    mktime(&date); // needed to populate date with unfilled tm_yday
-
-    return (date.tm_year * 365 + date.tm_yday) - (today->tm_year * 365 + today->tm_yday);
+    time_t due = mktime(&date); 
+    return (due - now) / 60 / 60 / 24;
 }
 
 void Interface::run_console()
 {
     cout << "\nAssignment Tracker (0.9.0)\n"
             "Copyright (C) 2022 Duncan Britt\n\n"
-            "Welcome.";
+            "Welcome.\n";
     if (!assignments.completed()) 
     {
         cout << " You're next assignment is due in " 
