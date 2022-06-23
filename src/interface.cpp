@@ -85,9 +85,13 @@ string Interface::split(const string& s, Out os, int p(int))
             {
                 string chunk;
                 copy(it, jt, back_inserter(chunk));
+                
                 *os++ = chunk;
             }
             
+            if (jt == s.end())
+                break;
+
             it = jt + 1;
         }
     }

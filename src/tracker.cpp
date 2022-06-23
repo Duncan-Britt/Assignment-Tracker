@@ -42,9 +42,9 @@ Assignment Tracker::next() const
 void Tracker::read_date(const string& s, Date& d)
 {
     vector<string> date_components; 
-        string err = Interface::split(s, back_inserter(date_components), isdash);
-        if (err.size() != 0)
-            throw runtime_error(err);
+    string err = Interface::split(s, back_inserter(date_components), isdash);
+    if (err.size() != 0)
+        throw runtime_error(err);
 
     d.tm_year = stoi(date_components[2]) - 1900;
     d.tm_mday = stoi(date_components[1]);

@@ -69,12 +69,16 @@ private:
     {
         std::string temp;
         std::string word;
+
+        in >> word;
         while (word.back() != '\"')
         {
-            in >> word;
             temp += word + " ";
+            in >> word;
         }
-        copy(temp.begin()+1, temp.end()-2, out);
+        temp += word;
+ 
+        copy(temp.begin()+1, temp.end()-1, out);
     }
 };
 

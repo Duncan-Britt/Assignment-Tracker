@@ -9,28 +9,22 @@
 #include <vector>
 #include <cstddef>
 
+#include <string>
+
 using namespace std;
 
 int main(int argc, char** argv) 
 {
-    ifstream ifs("../data/data.txt");
+    ifstream ifs("data.txt");
+
     Tracker assignments;
     assignments.read(ifs);
-
+    
     Interface app(assignments);
+   
+    app.run_console();
+    cout << "\nTa-ta for now!\n\n";
 
-    if (argc == 1) 
-    {
-        app.run_console();
-        cout << "\nTa-ta for now!\n\n";
-        return 0;
-    }
-
-    // vector<string> args;
-    // for (size_t i = 1; i < argc; ++i)
-    // {
-    //     args.push_back(string(argv[i]));
-    // }
-    // app.eval(args.begin(), args.end());
-    // return 0;
+    system("pause");
+    return 0;
 }
