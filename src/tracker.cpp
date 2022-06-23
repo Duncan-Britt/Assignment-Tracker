@@ -30,13 +30,32 @@ bool Tracker::completed() const
     return true;
 }
 
-Assignment Tracker::next() const
+Assignment* Tracker::next()
 { 
-    for (vector<Assignment>::size_type i = 0; i < data.size(); ++i)
-        if (!data[i].completed())
-            return data[i];
+    for (vector<Assignment>::size_type i = 0; i < data.size(); ++i) {
+        if (!data[i].completed() && !data[i].past()) {
+            Assignment* res = &(data[i]);
+            return res;
+        }
+    }
 
-    throw runtime_error("No next assignment!");
+    return nullptr;
+}
+
+bool is_leap_year(const int yr)
+{
+    return yr % 4 == 0 && (yr % 100 != 0 || yr % 400 == 0);
+}
+
+int day_of_year(const Date& d)
+{
+    static const int map_month_ydays[2][12] = {
+        { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 },
+        { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335},
+    };
+
+    const bool year_index = is_leap_year(d.tm_year);
+    return map_month_ydays[year_index][d.tm_mon] + d.tm_mday;
 }
 
 void Tracker::read_date(const string& s, Date& d)
@@ -49,6 +68,10 @@ void Tracker::read_date(const string& s, Date& d)
     d.tm_year = stoi(date_components[2]) - 1900;
     d.tm_mday = stoi(date_components[1]);
     d.tm_mon = stoi(date_components[0]) - 1;
+    d.tm_yday = day_of_year(d);
+    d.tm_hour = 0;
+    d.tm_min = 0;
+    d.tm_sec = 0;
 }
 
 void Tracker::read(ifstream& in)
@@ -75,8 +98,10 @@ void Tracker::read(ifstream& in)
         
         iss >> due_str >> available_str;
 
-        Date due;
-        Date available;        
+        time_t t = time(NULL);
+
+        Date due = *localtime(&t);
+        Date available = *localtime(&t);
         read_date(due_str, due);
         read_date(available_str, available);
 
@@ -463,12 +488,13 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
     {
         if (courses.count(a.get_course()) == 1) // Course in map already
         {
-            if (courses[a.get_course()]->past() && !a.past()) // existing assignment under course map is past, but assignment a is not
-                courses[a.get_course()] = &a;
-            else if (courses[a.get_course()]->past() == a.past() && // both are not past or both are past, && a is before
-                     before(a.get_due_date(), courses[a.get_course()]->get_due_date())) 
-            {
-                courses[a.get_course()] = &a;
+            if (!a.past() && !a.completed()) {
+                if (courses[a.get_course()]->past() || courses[a.get_course()]->completed()) {
+                    courses[a.get_course()] = &a;
+                }
+                else if (before(a.get_due_date(), courses[a.get_course()]->get_due_date())) {
+                    courses[a.get_course()] = &a;
+                }
             }
         }
         else
@@ -522,7 +548,7 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
         }
     }
     
-    if (*b_args == "a" || *b_args == "p") // if list past courses
+    if (b_args != e_args && ( *b_args == "a" || *b_args == "p")) // if list past courses
     {
         cout << endl << " Past courses:" << endl;
         for (vector<Assignment*>::const_iterator it = partitioned_assignments.begin(); it != upcoming; ++it)

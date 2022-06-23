@@ -4,14 +4,20 @@
 #include <cctype>
 #include <ctime>
 #include <map>
+#include <cmath>
+
 
 using namespace std;
 
 int days_from_now(struct tm date)
 {
     time_t now = time(NULL);
-    time_t due = mktime(&date); 
-    return (due - now) / 60 / 60 / 24;
+    struct tm* _now = localtime(&now);
+    _now->tm_hour = 0;
+    _now->tm_min = 0;
+    _now->tm_sec = 0;
+    time_t due = mktime(&date);
+    return  (int) ceil(((double) due - (double) now) / (60.0 * 60.0 * 24.0));
 }
 
 void Interface::run_console()
@@ -19,10 +25,12 @@ void Interface::run_console()
     cout << "\nAssignment Tracker (0.9.0)\n"
             "Copyright (C) 2022 Duncan Britt\n\n"
             "Welcome.\n";
-    if (!assignments.completed()) 
+
+    Assignment* next_due_assignmet = assignments.next();
+    if (!assignments.completed() && next_due_assignmet != NULL) 
     {
         cout << " You're next assignment is due in " 
-             << days_from_now(assignments.next().get_due_date()) <<" days.\n";
+             << days_from_now(assignments.next()->get_due_date()) <<" days.\n";
     }
     else
     {

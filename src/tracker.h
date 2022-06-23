@@ -49,7 +49,7 @@ public:
     static bool is_date(const std::string&);
     static bool is_num(const std::string&);
     bool completed() const;
-    Assignment next() const;
+    Assignment* next();
 
 private:
     void write() const;
