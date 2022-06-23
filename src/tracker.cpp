@@ -149,7 +149,56 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
     read_args_list(arg_it, arg_end, options);
 
     vector<iter> assignments_to_display; 
-    get_assignments(options, assignments_to_display);
+    vector<Assignment> reversed;
+    iter b;
+    iter e;
+    if (options.list_descending)
+    {
+        reverse_copy(data.begin(), data.end(), back_inserter(reversed));
+        b = reversed.begin();
+        e = reversed.end();
+    }
+    else
+    {
+        b = data.begin();
+        e = data.end();
+    }
+
+    vector<Assignment>::size_type count = 0;
+    vector<Assignment>::size_type offset = options.offset;
+
+    for (; b != e && count < options.limit; ++b) {
+        if (b->past() && !options.list_past)
+            continue;
+
+        if (options.list_past && !b->past())
+            continue;
+
+        if (!options.list_done && b->completed())
+            continue;
+
+        if (!options.list_todo && !b->completed())
+            continue;
+
+        if (!options.list_unavailable && !b->is_available())
+            continue;
+
+        if (options.list_course != "all" && options.list_course != b->get_course())
+            continue;
+
+        if (options.limit_date)
+            if (!options.list_descending && before(options.date_limit, b->get_due_date())
+                || options.list_descending && before(b->get_due_date(), options.date_limit))
+                break;
+
+        if (offset > 0) {
+            --offset;
+            continue;
+        }
+
+        assignments_to_display.push_back(b);
+        ++count;
+    }
 
     format_print(assignments_to_display);
 }
@@ -247,63 +296,6 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
         }
 
         ++arg_it;
-    }
-}
-
-void Tracker::get_assignments(const ShowOptions& options, vector<iter>& assignments) const
-{
-    vector<Assignment> reversed;
-    iter b;
-    iter e;
-    if (options.list_descending)
-    {
-        reverse_copy(data.begin(), data.end(), back_inserter(reversed));
-        b = reversed.begin();
-        e = reversed.end();
-    }
-    else
-    {
-        b = data.begin();
-        e = data.end();
-    }
-
-    vector<Assignment>::size_type count = 0;
-    
-    vector<Assignment>::size_type offset = options.offset;
-
-    for (; b != e && count < options.limit; ++b)
-    {
-        if (b->past() && !options.list_past)
-            continue;
-
-        if (options.list_past && !b->past())
-            continue;
-        
-        if (!options.list_done && b->completed())
-            continue;
-
-        if (!options.list_todo && !b->completed())
-            continue;
-
-        if (!options.list_unavailable && !b->is_available())
-            continue;
-        
-        if (options.list_course != "all" && options.list_course != b->get_course())
-            continue;
-
-        if (options.limit_date)
-            if (!options.list_descending && before(options.date_limit, b->get_due_date()) 
-                || options.list_descending && before(b->get_due_date(), options.date_limit))
-                break;
-
-        if (offset > 0) 
-        {
-            --offset;
-            continue;
-        }
-
-        assignments.push_back(b);
-        ++count;
     }
 }
 
