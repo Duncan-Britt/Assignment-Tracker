@@ -48,7 +48,7 @@ void Interface::run_console()
         string err = Interface::split(input, back_inserter(args), isspace);
         if (err.size() == 0)
         {
-            if (*args.begin() == "quit")
+            if (args.begin() != args.end() && *args.begin() == "quit")
                 break;
             eval(args.begin(), args.end());
         }
