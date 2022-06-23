@@ -306,7 +306,7 @@ void Tracker::format_print(vector<iter>& assignments) const
         string course = (*it)->get_course();
         string due = (*it)->get_due();
         string available = (*it)->get_available();
-        string completed = (*it)->completed() ? "✅" : "❌";
+        string completed = (*it)->completed() ? "Y" : "N";
         string id = to_string((*it)->get_id());
         cout << " " << string(TITLE_WIDTH - title.size(), ' ') << title << " | "
              << string(ID_WIDTH - id.size(), ' ') << id << " | " << string(COURSE_WIDTH - course.size(), ' ') << course << " | "

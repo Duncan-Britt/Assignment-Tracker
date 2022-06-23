@@ -31,7 +31,7 @@ void Interface::run_console()
         cout << endl;
     }
                 
-    cout << "Enter i to display instructions. Enter quit or ctr + d to quit.\n\n"
+    cout << "Enter i to display instructions. Enter quit or end-of-file to quit.\n\n"
          << "AT (0.9.0)> ";
 
     string input;
