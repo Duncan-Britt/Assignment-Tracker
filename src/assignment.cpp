@@ -6,18 +6,11 @@ using namespace std;
 
 typedef struct tm Date;
 
-void make_date_now(Date& res) 
-{
-    time_t now;
-    now = time(NULL);
-    res = *localtime(&now);
-}
-
 // REFACTOR DATE STUFF, CODE REUSE
 bool Assignment::past() const
 {
-    Date today;
-    make_date_now(today);
+    time_t now = time(NULL);
+    Date today = *localtime(&now);
 
     if (due_date.tm_year == today.tm_year)
         if (due_date.tm_mon == today.tm_mon)
@@ -30,8 +23,8 @@ bool Assignment::past() const
 
 bool Assignment::is_available() const
 {
-    Date today;
-    make_date_now(today);
+    time_t now = time(NULL);
+    Date today = *localtime(&now);
 
     if (available.tm_year == today.tm_year)
         if (available.tm_mon == today.tm_mon)

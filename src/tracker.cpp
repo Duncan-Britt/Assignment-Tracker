@@ -424,7 +424,6 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
     }
 
     sort(data.begin(), data.end());
-    cout << "WRITE CALLED" << endl; // DEBUGGING
     write();
 }
 
@@ -482,7 +481,6 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
 void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<std::string>::const_iterator e_args)
 {
     map<string, Assignment*> courses;
-    string::size_type max_course_name_len = 0;
 
     for (Assignment& a : data) // Map course to next relevant assignment  
     {
@@ -513,7 +511,7 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
     });
 
     vector<Assignment*>::const_iterator upcoming = find_if(partitioned_assignments.begin(), partitioned_assignments.end(), [](const Assignment* a) {
-        return !a->past();
+        return !a->past() && !a->completed();
     });
 
     if (b_args == e_args || *b_args == "a") // if list current courses
