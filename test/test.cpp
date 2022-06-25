@@ -3,6 +3,7 @@
 #include <vector>
 #include <iterator>
 #include <cctype>
+// #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "../src/assignment.h"
@@ -14,6 +15,12 @@
 // Otherwise, use EXPECT
 
 using namespace testing;
+
+AssertionResult IsSomething(int a, int b)
+{
+    return AssertionSuccess();
+    return AssertionFailure();
+}
 
 TEST(DateTests, IsDate)
 {
@@ -88,6 +95,42 @@ TEST(SplitTests, EmptyString)
     	return c == '\0';
     });
     EXPECT_EQ(strs.size(), 0);
+}
+
+TEST(DateTests, DISABLED_SomeBrokenTest)
+{
+    EXPECT_TRUE(false);
+}
+
+class DISABLED_TrackerTests: public ::testing::Test
+{
+protected:
+    static int shared_resource;
+    
+    static void SetUpTestSuite()
+    {
+        // setup before all trackertests
+    }
+
+    static void TearDownTestSuite()
+    {
+        // teardown after all tracker tests
+    }
+    
+    virtual void SetUp() override
+    {
+	//...
+    }
+
+    virtual void TearDown() override
+    {
+	//...
+    }    
+};
+
+TEST_F(DISABLED_TrackerTests, NoArgs)
+{
+    EXPECT_TRUE(false);
 }
 
 
