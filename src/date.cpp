@@ -33,7 +33,25 @@ bool before(const Date& a, const Date& b)
 
 bool is_date(const string& s)
 {
-    return regex_match(s, regex("[0-9]{2}-[0-9]{2}-[0-9]{4}"));
+    if (!regex_match(s, regex("[0-9]{2}-[0-9]{2}-[0-9]{4}"))) {
+	return false;
+    }
+
+    int month = stoi(s.substr(0,2));
+    
+    if (!(0 < month && month < 13)) {
+	return false;
+    }
+
+    int year = stoi(s.substr(6, 4));
+    int day = stoi(s.substr(3, 2));
+
+    static const int map_month_days[2][12] = {
+	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+    };
+    
+    return 0 < day && day <= map_month_days[is_leap_year(year)][month-1];
 }
 
 void read_date(const string& s, Date& d)

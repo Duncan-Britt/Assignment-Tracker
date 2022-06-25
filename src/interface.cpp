@@ -7,7 +7,10 @@
 #include <map>
 #include <cmath>
 
-using namespace std;
+using std::cout;        using std::string;
+using std::cin;         using std::vector;
+using std::endl;
+// "using namespace std" causes error when invoking Interface::split 
 
 void Interface::run_console()
 {
@@ -46,52 +49,6 @@ void Interface::run_console()
 
         cout << "AT (0.9.0)> ";
     }
-}
-
-template <class Out>
-string Interface::split(const string& s, Out os, int p(int))
-{
-    string::const_iterator it = s.begin();
-    while ( it < s.end())
-    {
-        string::const_iterator jt = it;
-        if (*jt == '"')
-        {
-            ++jt;
-            while(jt < s.end() && *jt != '"')
-                ++jt;
-
-            if (jt == s.end())
-            {
-                return "error: Expecting \"";
-            }
-
-            string chunk;
-            copy(it + 1, jt, back_inserter(chunk));
-            *os++ = chunk;
-            it = jt + 1;
-        }
-        else
-        {
-            while(jt < s.end() && !p(*jt))
-                ++jt;
-
-            if (jt != it)
-            {
-                string chunk;
-                copy(it, jt, back_inserter(chunk));
-                
-                *os++ = chunk;
-            }
-            
-            if (jt == s.end())
-                break;
-
-            it = jt + 1;
-        }
-    }
-
-    return "";
 }
 
 void Interface::eval(vector<string>::const_iterator b, vector<string>::const_iterator e)
