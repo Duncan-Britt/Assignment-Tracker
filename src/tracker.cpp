@@ -9,6 +9,7 @@
 #include <regex>
 #include <fstream>
 #include <map>
+#include "date.h"
 
 using namespace std;
 
@@ -40,38 +41,6 @@ Assignment* Tracker::next()
     }
 
     return nullptr;
-}
-
-bool is_leap_year(const int yr)
-{
-    return yr % 4 == 0 && (yr % 100 != 0 || yr % 400 == 0);
-}
-
-int day_of_year(const Date& d)
-{
-    static const int map_month_ydays[2][12] = {
-        { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 },
-        { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335},
-    };
-
-    const bool year_index = is_leap_year(d.tm_year);
-    return map_month_ydays[year_index][d.tm_mon] + d.tm_mday;
-}
-
-void Tracker::read_date(const string& s, Date& d)
-{
-    vector<string> date_components; 
-    string err = Interface::split(s, back_inserter(date_components), isdash);
-    if (err.size() != 0)
-        throw runtime_error(err);
-
-    d.tm_year = stoi(date_components[2]) - 1900;
-    d.tm_mday = stoi(date_components[1]);
-    d.tm_mon = stoi(date_components[0]) - 1;
-    d.tm_yday = day_of_year(d);
-    d.tm_hour = 0;
-    d.tm_min = 0;
-    d.tm_sec = 0;
 }
 
 void Tracker::read(ifstream& in)
@@ -203,32 +172,24 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
     format_print(assignments_to_display);
 }
 
-bool Tracker::before(const Date& a, const Date& b)
-{
-    if (a.tm_year == b.tm_year)
-        if (a.tm_mon == b.tm_mon)
-            return a.tm_mday < b.tm_mday;
-        else 
-            return a.tm_mon < b.tm_mon;
-    else
-        return a.tm_year < b.tm_year;
-}
-
-bool Tracker::is_date(const string& s)
-{
-    return regex_match(s, regex("[0-9]{2}-[0-9]{2}-[0-9]{4}"));
-}
-
 bool Tracker::is_num(const string& s)
 {
     return regex_match(s, regex("[0-9]+"));
 }
 
-void Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::const_iterator e, AddInfo& info) const
+bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::const_iterator e, AddInfo& info) const
 {
     info.title = *b++;
     info.description = *b++;
+
+    if (!is_date(*b)) {
+        cout << "Malformed due date: " << *b << endl
+            << "Expected MM-DD-YYYY" << endl;
+        return false;
+    }
+
     read_date(*b++, info.due);
+        
     while (b != e)
     {
         if (*b == "course") 
@@ -244,6 +205,8 @@ void Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
         else
             throw runtime_error("Invalid Args");
     }
+
+    return true;
 }
 
 void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end, ShowOptions& options) const
@@ -252,47 +215,29 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
     {
         if (*arg_it == "past") 
             options.list_past = true;
-
-        if (is_date(*arg_it)) // COULD USE read_date() ?
-        {
+        else if (is_date(*arg_it)) {
             options.limit_date = true;
-            vector<string> date_components; 
-            string err = Interface::split(*arg_it, back_inserter(date_components), isdash);
-            options.date_limit.tm_year = stoi(date_components[2]) - 1900;
-            options.date_limit.tm_mday = stoi(date_components[1]);
-            options.date_limit.tm_mon = stoi(date_components[0]) - 1;
-        }
-
-        if (is_num(*arg_it))
-        {
+            read_date(*arg_it, options.date_limit);
+        } else if (is_num(*arg_it))
             options.limit = stoi(*arg_it);
-        }
-
-        if (*arg_it == "todo")
+        else if (*arg_it == "todo")
             options.list_done = false;
-
-        if (*arg_it == "done")
+        else if (*arg_it == "done")
             options.list_todo = false;
-
-        if (*arg_it == "available")
+        else if (*arg_it == "available")
             options.list_unavailable = false;
-
-        if (*arg_it == "desc")
+        else if (*arg_it == "desc")
             options.list_descending = true;
-
-        if (*arg_it == "asc") // DEFAULT
+        else if (*arg_it == "asc") // DEFAULT
             options.list_descending = false;
-
-        if (*arg_it == "course")
-        {
+        else if (*arg_it == "course") {
             ++arg_it;
             options.list_course = *arg_it;
-        }
-
-        if (*arg_it == "offset")
-        {
+        } else if (*arg_it == "offset") {
             ++arg_it;
             options.offset = stoi(*arg_it);
+        } else {
+            cout << "Unkown arg: " << *arg_it << endl;
         }
 
         ++arg_it;
@@ -347,11 +292,12 @@ void Tracker::write() const
 void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterator e) 
 {
     AddInfo info;
-    read_args_add(b, e, info);
-
-    data.push_back(Assignment(next_id++, false, info.title, info.description, info.course, info.due, info.available));
-    sort(data.begin(), data.end());
-    write();
+    bool ok = read_args_add(b, e, info);
+    if (ok) {
+        data.push_back(Assignment(next_id++, false, info.title, info.description, info.course, info.due, info.available));
+        sort(data.begin(), data.end());
+        write();
+    } 
 }
 
 void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_iterator e) 
@@ -388,15 +334,31 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
         {
             ++b;
             Date date;
-            read_date(*b, date);
-            it->set_due_date(date);
+            if (is_date(*b))
+            {
+                read_date(*b, date);
+                it->set_due_date(date);
+            }
+            else 
+            {
+                cout << "Invalid date: " << *b << endl
+                    << "Expected MM-DD-YYYY" << endl;
+            }
         }
         else if (*b == "available")
         {
             ++b;
             Date date;
-            read_date(*b, date);
-            it->set_due_date(date);
+            if (is_date(*b)) 
+            {
+                read_date(*b, date);
+                it->set_available_date(date);
+            } 
+            else 
+            {
+                cout << "Invalid date: " << *b << endl
+                     << "Expected MM-DD-YYYY" << endl;
+            }
         }
         else if (*b == "complete")
         {
@@ -421,8 +383,14 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
 void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
 {
-    while (arg_it != arg_end)
-        show(stoi(*arg_it++));
+    while (arg_it != arg_end) {
+        if (is_num(*arg_it)) {
+            show(stoi(*arg_it++));
+        }
+        else {
+            cout << "Invalid id: " << *arg_it++ << endl;
+        }
+    }
 }
 
 void Tracker::show(unsigned long long id) const

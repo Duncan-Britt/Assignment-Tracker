@@ -1,4 +1,5 @@
 #include "assignment.h"
+#include "date.h"
 #include <iostream>
 #include <stdio.h>
 
@@ -6,19 +7,12 @@ using namespace std;
 
 typedef struct tm Date;
 
-// REFACTOR DATE STUFF, CODE REUSE
 bool Assignment::past() const
 {
     time_t now = time(NULL);
     Date today = *localtime(&now);
 
-    if (due_date.tm_year == today.tm_year)
-        if (due_date.tm_mon == today.tm_mon)
-            return due_date.tm_mday < today.tm_mday;
-        else 
-            return due_date.tm_mon < today.tm_mon;
-    else
-        return due_date.tm_year < today.tm_year;
+    return before(due_date, today);
 }
 
 bool Assignment::is_available() const
@@ -26,25 +20,14 @@ bool Assignment::is_available() const
     time_t now = time(NULL);
     Date today = *localtime(&now);
 
-    if (available.tm_year == today.tm_year)
-        if (available.tm_mon == today.tm_mon)
-            return available.tm_mday <= today.tm_mday;
-        else 
-            return available.tm_mon <= today.tm_mon;
-    else
-        return available.tm_year <= today.tm_year;
+    return !before(today, available);
 }
 
 bool Assignment::operator<(const Assignment& other) const
 {
-    if (due_date.tm_year != other.due_date.tm_year) 
-        return due_date.tm_year < other.due_date.tm_year;
-    else if (due_date.tm_mon != other.due_date.tm_mon)
-        return due_date.tm_mon < other.due_date.tm_mon;
-    else if (due_date.tm_mday != other.due_date.tm_mday)
-        return due_date.tm_mday < other.due_date.tm_mday;
-    else 
-        return !complete && other.complete;
+    return before(due_date, other.due_date) || 
+               (!before(other.due_date, due_date) && 
+                !complete && other.complete);
 }
 
 string Assignment::get_due() const
