@@ -265,7 +265,7 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
 
 void Tracker::format_print(vector<iter>& assignments) const
 {
-    const string::size_type TITLE_WIDTH = max(width([](const Assignment& a){ return a.get_title(); }), string("Title").size());
+    const string::size_type TITLE_WIDTH = min(max(width([](const Assignment& a) { return a.get_title(); }), string("Title").size()), (unsigned long long) 50);
     const string::size_type COURSE_WIDTH = max(width([](const Assignment& a){ return a.get_course(); }), string("Course").size());
     const string::size_type DATE_WIDTH = 10;
     const string::size_type ID_WIDTH = max(width([](const Assignment& a){ return to_string(a.get_id()); }), string("ID").size());
@@ -289,6 +289,12 @@ void Tracker::format_print(vector<iter>& assignments) const
         string available = (*it)->get_available();
         string completed = (*it)->completed() ? "Y" : "N";
         string id = to_string((*it)->get_id());
+
+        if (title.size() > TITLE_WIDTH)
+        {
+            title = title.substr(0, TITLE_WIDTH - 3) + "...";
+        }
+
         cout << " " << string(TITLE_WIDTH - title.size(), ' ') << title << " | "
              << string(ID_WIDTH - id.size(), ' ') << id << " | " << string(COURSE_WIDTH - course.size(), ' ') << course << " | "
              << due << " | " << available << " | " << string(string("Complete").size() - 3, ' ') 
