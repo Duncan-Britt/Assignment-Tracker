@@ -3,6 +3,7 @@
 #include <vector>
 #include <iterator>
 #include <cctype>
+#include <fstream>
 // #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -91,47 +92,63 @@ TEST(SplitTests, EmptyString)
     std::vector<std::string> strs;
     Interface::split("", back_inserter(strs), isspace);
     EXPECT_EQ(strs.size(), 0);
-    Interface::split("", back_inserter(strs), [](char c) {
-    	return c == '\0';
-    });
+    EXPECT_EQ(Interface::split("", back_inserter(strs), [](char c) {
+    	return c == ' ';
+    }), "");
     EXPECT_EQ(strs.size(), 0);
 }
 
-TEST(DateTests, DISABLED_SomeBrokenTest)
+TEST(SplitTests, NonEmptyStrings)
 {
-    EXPECT_TRUE(false);
+    std::vector<std::string> strs;    
+    EXPECT_EQ(Interface::split("Hello \"cruel world\"", back_inserter(strs), isspace), "");
+
+    std::vector<std::string> expected = std::vector<std::string> {"Hello", "cruel world"};
+    EXPECT_EQ(strs, expected);
+
+    strs.erase(strs.begin(), strs.end());
+    EXPECT_EQ(Interface::split(" Hello--\"how-do- you-do\"-World", back_inserter(strs), [](char c) {
+	return c == '-';
+    }), "");
+    
+    expected = std::vector<std::string> {" Hello", "how-do- you-do", "World"};
+    EXPECT_EQ(strs, expected);
 }
 
-class DISABLED_TrackerTests: public ::testing::Test
+class TrackerTests: public ::testing::Test
 {
 protected:
     static int shared_resource;
+    Tracker assignments;
     
     static void SetUpTestSuite()
     {
         // setup before all trackertests
+	
     }
-
+    
     static void TearDownTestSuite()
     {
         // teardown after all tracker tests
     }
     
-    virtual void SetUp() override
+    virtual void SetUp()
     {
-	//...
+	std::ifstream ifs("../test/mock_data.txt");
+	assignments.read(ifs);
     }
 
-    virtual void TearDown() override
+    virtual void TearDown()
     {
 	//...
     }    
 };
 
-TEST_F(DISABLED_TrackerTests, NoArgs)
-{
-    EXPECT_TRUE(false);
-}
+// TEST_F(TrackerTests, ListTest)
+// {
+//     EXPECT_TRUE(false);
+//     // assignmentts.i();
+// }
 
 
 
