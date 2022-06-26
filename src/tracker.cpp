@@ -156,8 +156,8 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
             continue;
 
         if (options.limit_date)
-            if (!options.list_descending && before(options.date_limit, b->get_due_date())
-                || options.list_descending && before(b->get_due_date(), options.date_limit))
+            if ((!options.list_descending && before(options.date_limit, b->get_due_date()))
+                || (options.list_descending && before(b->get_due_date(), options.date_limit)))
                 break;
 
         if (offset > 0) {
