@@ -5,11 +5,12 @@
 #include <cctype>
 #include <ctime>
 #include <map>
+#include <string>
 #include <cmath>
 
 using std::cout;        using std::string;
 using std::cin;         using std::vector;
-using std::endl;
+using std::endl;        using std::to_string;
 // "using namespace std" causes error when invoking Interface::split 
 
 void Interface::run_console()
@@ -21,8 +22,9 @@ void Interface::run_console()
     Assignment* next_due_assignmet = assignments.next();
     if (!assignments.completed() && next_due_assignmet != NULL) 
     {
-        cout << "You're next assignment is due in " 
-             << days_from_now(assignments.next()->get_due_date()) <<" days.\n";
+        const int days_til_due = days_from_now(assignments.next()->get_due_date());
+        const string in_x_days = days_til_due == 0 ? "today." : "in " + to_string(days_til_due) + " days.";
+        cout << "You're next assignment is due " << in_x_days << endl;
     }
     else
     {
@@ -73,7 +75,7 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
     else if (command == "lc")
         assignments.lc(b, e);
     else if (command == "dc")
-        assignments.dc(*b);
+        assignments.dc(b, e);
     else if (command == "i")
         assignments.i(b, e);
     else

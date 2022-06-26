@@ -48,7 +48,18 @@ string Assignment::get_available() const
 
 std::ostream& operator<<(std::ostream& out, const Assignment& assignment)
 {
-    return out << assignment.get_course() << " " << assignment.get_title() 
-               << " " << (assignment.completed() ? "Complete" : "Incomplete")
-               << endl << assignment.get_description();
+    out << assignment.get_course() << " " << assignment.get_title()
+        << " " << (assignment.completed() ? "Complete" : "Incomplete")
+        << endl << assignment.get_description() << endl;
+
+        if (assignment.past()) {
+            return out << "Was due : " << assignment.get_due();
+        } 
+
+        unsigned due_in = days_from_now(assignment.get_due_date());
+        if (due_in == 0) {
+            return out << "Due today.";
+        }
+        
+        return out << "Due in " << due_in << " days.";
 }

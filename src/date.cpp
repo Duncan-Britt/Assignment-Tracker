@@ -61,6 +61,11 @@ void read_date(const string& s, Date& d)
     if (err.size() != 0)
         throw runtime_error(err);
 
+    if (date_components.size() != 3)
+    {
+        throw runtime_error("Unable to read date");
+    }
+
     d.tm_year = stoi(date_components[2]) - 1900;
     d.tm_mday = stoi(date_components[1]);
     d.tm_mon = stoi(date_components[0]) - 1;

@@ -47,7 +47,7 @@ void Tracker::read(ifstream& in)
 {
     string s;
 
-    while (getline(in, s)) 
+    while (getline(in, s))
     {
         istringstream iss(s);
 
@@ -64,7 +64,7 @@ void Tracker::read(ifstream& in)
         read_quoted(iss, back_inserter(title));
         read_quoted(iss, back_inserter(description));
         read_quoted(iss, back_inserter(course));
-        
+
         iss >> due_str >> available_str;
 
         time_t t = time(NULL);
@@ -179,8 +179,24 @@ bool Tracker::is_num(const string& s)
 
 bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::const_iterator e, AddInfo& info) const
 {
+    if (b == e) 
+    {
+        cout << "Insufficient args. Enter i add for more info." << endl;
+        return false;
+    }
     info.title = *b++;
+    if (b == e)
+    {
+        cout << "Insufficient args. Enter i add for more info." << endl;
+        return false;
+    }
     info.description = *b++;
+
+    if (b == e)
+    {
+        cout << "Insufficient args. Enter i add for more info." << endl;
+        return false;
+    }
 
     if (!is_date(*b)) {
         cout << "Malformed due date: " << *b << endl
@@ -203,7 +219,10 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
             read_date(*b++, info.available);
         }
         else
-            throw runtime_error("Invalid Args");
+        {
+            cout << "Unkowned argument: " << *b << endl;
+            return false;
+        }
     }
 
     return true;
@@ -297,6 +316,7 @@ void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterat
         data.push_back(Assignment(next_id++, false, info.title, info.description, info.course, info.due, info.available));
         sort(data.begin(), data.end());
         write();
+        cout << "Added " << info.title << endl;
     } 
 }
 
@@ -343,6 +363,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
             {
                 cout << "Invalid date: " << *b << endl
                     << "Expected MM-DD-YYYY" << endl;
+                return;
             }
         }
         else if (*b == "available")
@@ -358,6 +379,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
             {
                 cout << "Invalid date: " << *b << endl
                      << "Expected MM-DD-YYYY" << endl;
+                return;
             }
         }
         else if (*b == "complete")
@@ -379,16 +401,22 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
     sort(data.begin(), data.end());
     write();
+    cout << "Assignment updated." << endl;
 }
 
-void Tracker::show(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
+void Tracker::show(vector<string>::const_iterator b, vector<string>::const_iterator e) const
 {
-    while (arg_it != arg_end) {
-        if (is_num(*arg_it)) {
-            show(stoi(*arg_it++));
+    if (b == e) {
+        cout << "Show aborted. You must specify the ID of the desired assignment." << endl;
+        return;
+    }
+
+    while (b != e) {
+        if (is_num(*b)) {
+            show(stoi(*b++));
         }
         else {
-            cout << "Invalid id: " << *arg_it++ << endl;
+            cout << "Invalid id: " << *b++ << endl;
         }
     }
 }
@@ -409,8 +437,20 @@ void Tracker::show(unsigned long long id) const
 
 void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_iterator e) 
 {
-    vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) { 
-        return a.get_id() == stoi(*b); 
+    if (b == e) {
+        cout << "Remove aborted. You must specify the ID of the assignment to remove." << endl;
+        return;
+    }
+
+    if (!is_num(*b)) {
+        cout << "Invalid ID: " << *b << endl;
+        return;
+    }
+
+    unsigned long long id = stoi(*b);
+    
+    vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [id](Assignment a) { 
+        return a.get_id() == id; 
     });
     if (it == data.end())
     {
@@ -418,12 +458,37 @@ void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_ite
         return;
     }
 
+    string title = it->get_title();
+
     data.erase(it);
     write();
+
+    cout << "Deleted: " << title << endl;
+
+    if (++b != e) {
+        string unused;
+        while (b != e) {
+            unused += *b + " ";
+            ++b;
+        }
+        cout << "Unused arguments: " << unused << endl;
+    }
 }
 
 void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_iterator e) 
 {
+    if (b == e)
+    {
+        cout << "You must enter the ID of the assignment you wish to complete." << endl;
+        return;
+    }
+
+    if (!is_num(*b))
+    {
+        cout << "You must enter a valid ID." << endl;
+        return;
+    }
+
     vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) { 
         return a.get_id() == stoi(*b); 
     });
@@ -436,6 +501,17 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
     it->mark_complete();
     sort(data.begin(), data.end());
     write();
+
+    cout << "Assignment updated." << endl;
+
+    ++b;
+    string unused;
+    while (b != e)
+    {
+        unused += *b++;
+    }
+
+    cout << "Unused arguments: " << unused << endl;
 }
 
 void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<std::string>::const_iterator e_args)
@@ -474,7 +550,7 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
         return !a->past() && !a->completed();
     });
 
-    if (b_args == e_args || *b_args == "a") // if list current courses
+    if (b_args == e_args || *b_args != "p") // if list current courses
     {
         const string::size_type UPCOMING_COURSE_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a){ return a->get_course(); }), string("Course").size());
         const string::size_type NEXT_ASSIGNMENT_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a){ return a->get_title(); }), string("Next Assignment").size());
@@ -514,17 +590,43 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
         
         cout << endl;
     }
+
+    if (b_args != e_args) 
+    {
+        if ((*b_args != "a" && *b_args != "p") || (++b_args != e_args))
+        {
+            string args;
+            while (b_args != e_args)
+            {
+                args += *b_args++ + " ";
+            }
+            cout << endl << "Unused args: " << args << endl;
+            cout << "lc accepts one argument, either 'a' or 'p'." << endl;
+        }
+    }
 }
 
-void Tracker::dc(const string& course_name) 
+void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterator e)
 {
-    data.erase(
-        remove_if(data.begin(), data.end(), [course_name](const Assignment& a) { return a.get_course() == course_name; }), 
-        data.end());
+    if (b == e) {
+        cout << "Aborted. You must specifiy a course to be removed." << endl;
+        return;
+    }
 
-    for (vector<Assignment>::const_iterator it = data.begin(); it != data.end(); ++it)
-        cout << *it << endl << endl;
+    vector<Assignment>::size_type n_before = data.size();
+    while (b != e) {
+        const string& course_name = *b;
+        data.erase(
+            remove_if(data.begin(), data.end(), [course_name](const Assignment& a) { return a.get_course() == course_name; }),
+            data.end()
+        );
+
+        ++b;
+    }
+
     write();
+
+    cout << "Removed " << n_before - data.size() << " assignment(s)" << endl;
 }
 
 void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator e) 
@@ -685,6 +787,11 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
             {"dc", DC},
             {"quit", QUIT}
         };
+
+        if (command_info.find(*b) == command_info.end()) {
+            cout << *b << " is not a command." << endl;
+            return;
+        }
         
         cout << command_info[*b] << endl;
     }
