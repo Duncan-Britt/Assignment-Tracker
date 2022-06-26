@@ -17,6 +17,7 @@ using namespace std;
 #ifdef _WIN32
 #include <direct.h>
 #define pause system("pause")
+#define path_suffix ""
 
 char* get_dir(char* buffer, size_t size)
 {
@@ -26,6 +27,7 @@ char* get_dir(char* buffer, size_t size)
 #else 
 #include <unistd.h>
 #define pause
+#define path_suffix "/"
 
 char* get_dir(char* buffer, size_t size)
 {
@@ -49,7 +51,7 @@ int main(int argc, char** argv)
         if (get_dir(dir, 300) != NULL)
         {
             cout << "There was an error reading your saved data.\n"
-                << "Inspect " << dir << "data.txt" << endl;
+		 << "Inspect " << dir << path_suffix << "data.txt" << endl;
         }
         pause;
         return 1;
