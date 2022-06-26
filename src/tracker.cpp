@@ -265,7 +265,7 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
 
 void Tracker::format_print(vector<iter>& assignments) const
 {
-    const string::size_type TITLE_WIDTH = min(max(width([](const Assignment& a) { return a.get_title(); }), string("Title").size()), (unsigned long long) 50);
+    const string::size_type TITLE_WIDTH = min((int) max(width([](const Assignment& a) { return a.get_title(); }), string("Title").size()), 50);
     const string::size_type COURSE_WIDTH = max(width([](const Assignment& a){ return a.get_course(); }), string("Course").size());
     const string::size_type DATE_WIDTH = 10;
     const string::size_type ID_WIDTH = max(width([](const Assignment& a){ return to_string(a.get_id()); }), string("ID").size());
