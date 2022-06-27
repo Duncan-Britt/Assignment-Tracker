@@ -256,7 +256,7 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
             ++arg_it;
             options.offset = stoi(*arg_it);
         } else {
-            cout << "Unkown arg: " << *arg_it << endl;
+            cout << "Unknown arg: " << *arg_it << endl;
         }
 
         ++arg_it;
