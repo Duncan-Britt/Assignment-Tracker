@@ -11,11 +11,13 @@
 using std::cout;        using std::string;
 using std::cin;         using std::vector;
 using std::endl;        using std::to_string;
-// "using namespace std" causes error when invoking Interface::split 
+// "using namespace std" causes error when invoking Interface::split
+
+const string V = "0.1.0";
 
 void Interface::run_console()
 {
-    cout << "\nAssignment Tracker (0.9.0)\n"
+    cout << "\nAssignment Tracker (" << V << ")\n"
             "Copyright (C) 2022 Duncan Britt\n\n"
             "Welcome.\n";
 
@@ -32,7 +34,7 @@ void Interface::run_console()
     }
                 
     cout << "Enter i to display instructions. Enter quit or end-of-file to quit.\n\n"
-         << "AT (0.9.0)> ";
+         << "AT (" << V << ")> ";
 
     string input;
     vector<string> args;
@@ -49,7 +51,7 @@ void Interface::run_console()
         else 
             cout << err << endl;
 
-        cout << "AT (0.9.0)> ";
+        cout << "AT (" << V << ")> ";
     }
 }
 
