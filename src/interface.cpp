@@ -17,7 +17,7 @@ const string V = "0.1.0";
 
 void Interface::run_console()
 {
-    cout << "\nAssignment Tracker (" << V << ")\n"
+    cout << "\nAssignment Tracker " << V << "\n"
             "Copyright (C) 2022 Duncan Britt\n\n"
             "Welcome.\n";
 
@@ -34,7 +34,7 @@ void Interface::run_console()
     }
                 
     cout << "Enter i to display instructions. Enter quit or end-of-file to quit.\n\n"
-         << "AT (" << V << ")> ";
+         << "atrack(v" << V << ")> ";
 
     string input;
     vector<string> args;
@@ -51,7 +51,7 @@ void Interface::run_console()
         else 
             cout << err << endl;
 
-        cout << "AT (" << V << ")> ";
+        cout << "atrack(v" << V << ")> ";
     }
 }
 
