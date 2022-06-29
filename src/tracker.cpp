@@ -216,6 +216,12 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
         else if (*b == "available")
         {
             ++b;
+	    if (!is_date(*b))
+	    {
+		cout << "Malformed due date: " << *b << endl
+		     << "Expected MM-DD-YYYY" << endl;
+		return false;
+	    }
             read_date(*b++, info.available);
         }
         else
@@ -328,6 +334,18 @@ void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterat
 
 void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_iterator e) 
 {
+    if (b == e)
+    {
+	cout << "You must specify the ID of the assignment to edit, and what you would like to change." << endl;
+	cout << "Enter i edit for more information." << endl;
+	return;
+    }
+    
+    if (!is_num(*b))
+    {
+	cout << "Invalid ID: " << *b << endl;
+	return;
+    }
     vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) { 
         return a.get_id() == stoi(*b); 
     });
@@ -514,10 +532,12 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
     string unused;
     while (b != e)
     {
-        unused += *b++;
+        unused += *b++ + " ";
     }
 
-    cout << "Unused arguments: " << unused << endl;
+    if (unused != "") {
+	cout << "Unused arguments: " << unused << endl;
+    }
 }
 
 void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<std::string>::const_iterator e_args)
@@ -640,7 +660,7 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
     if (b == e)
         cout << " Command | Description\n"
                 "---------+---------------------\n"
-                "    list | dipslays assignments\n"
+                "    list | displays assignments\n"
                 "    show | displays an assignment\n"
                 "     add | add new assignment\n"
                 "    edit | edit assignment info\n"
