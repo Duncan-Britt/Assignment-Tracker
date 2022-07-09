@@ -113,7 +113,7 @@ string::size_type Tracker::width(vector<Assignment*>::const_iterator b, vector<A
 
 void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
 {
-    ShowOptions options;
+    ListOptions options;
     options.limit = data.size();
     read_args_list(arg_it, arg_end, options);
 
@@ -156,10 +156,14 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
             continue;
 
         if (options.limit_date)
-            if ((!options.list_descending && before(options.date_limit, b->get_due_date()))
-                || (options.list_descending && before(b->get_due_date(), options.date_limit)))
+            if (!options.list_descending && before(options.date_limit, b->get_due_date()))
+	    {
                 break;
-
+	    }
+	    else if (options.list_descending && before(options.date_limit, b->get_due_date()))
+	    {
+		continue;
+	    }
         if (offset > 0) {
             --offset;
             continue;
@@ -234,7 +238,7 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
     return true;
 }
 
-void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end, ShowOptions& options) const
+void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end, ListOptions& options) const
 {
     while (arg_it != arg_end) 
     {
@@ -257,10 +261,29 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
             options.list_descending = false;
         else if (*arg_it == "course") {
             ++arg_it;
-            options.list_course = *arg_it;
+	    if (arg_it != arg_end) {	       
+		options.list_course = *arg_it;
+	    } else {
+		cout << "Expected [course name] after arg: course" << endl;
+		return;
+	    }
         } else if (*arg_it == "offset") {
-            ++arg_it;
-            options.offset = stoi(*arg_it);
+            if (++arg_it != arg_end)
+	    {
+		if (is_num(*arg_it))
+		{    
+		    options.offset = stoi(*arg_it);
+		}
+		else
+		{
+		    cout << "Expected " << *arg_it << " to be an integer." << endl;
+		}			
+	    }
+	    else
+	    {
+		cout << "Expected [N] after arg: offset" << endl;
+		return;
+	    }
         } else {
             cout << "Unknown arg: " << *arg_it << endl;
         }
@@ -799,8 +822,8 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
 
         static const string QUIT = "===============================================\n"
                                    "End program using:\n"
-                                   "      quit\n\n"
-                                   "Or end of file (control+d)\n\n";
+	                           "      (quit | end-of-file)\n\n";
+                                   
 
         static map<string, string> command_info = {
             {"list", LIST},

@@ -1,6 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src
 
+# $(localstatedir)
+
 clean-local:
 	@rm config.status configure config.log
 	@rm Makefile

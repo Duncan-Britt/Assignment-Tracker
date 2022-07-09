@@ -9,7 +9,7 @@
 #include <ctime>
 #include <string>
 
-typedef struct ShowOptions {
+typedef struct ListOptions {
     bool list_past = false;
     bool list_todo = true;
     bool list_done = true;
@@ -20,7 +20,7 @@ typedef struct ShowOptions {
     std::vector<Assignment>::size_type offset = 0;
     bool limit_date = false;
     struct tm date_limit;
-} ShowOptions;
+} ListOptions;
 
 typedef struct AddInfo {
     std::string title;
@@ -56,7 +56,7 @@ private:
     std::string::size_type width(std::string(const Assignment&)) const;
     std::string::size_type width(std::vector<Assignment*>::const_iterator, std::vector<Assignment*>::const_iterator, std::string(const Assignment*)) const;
     std::vector<Assignment> data;
-    void read_args_list(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator, ShowOptions&) const;
+    void read_args_list(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator, ListOptions&) const;
     bool read_args_add(std::vector<std::string>::const_iterator b, std::vector<std::string>::const_iterator e, AddInfo& info) const;
     void format_print(std::vector<std::vector<Assignment>::const_iterator>&) const;  
 
