@@ -529,37 +529,40 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
         cout << "You must enter the ID of the assignment you wish to complete." << endl;
         return;
     }
-
-    if (!is_num(*b))
-    {
-        cout << "You must enter a valid ID." << endl;
-        return;
-    }
-
-    vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) { 
-        return a.get_id() == stoi(*b); 
-    });
-    if (it == data.end())
-    {
-        cout << "No assignment found with id: " << *b << endl;
-        return;
-    }
-
-    it->mark_complete();
-    sort(data.begin(), data.end());
-    write();
-
-    cout << "Assignment updated." << endl;
-
-    ++b;
-    string unused;
+    
+    string unused = "";
+    unsigned count = 0;
     while (b != e)
     {
-        unused += *b++ + " ";
-    }
+        if (!is_num(*b))
+        {
+            unused += *b + " ";
+        }
+        else
+        {
+            vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) {
+                return a.get_id() == stoi(*b);
+            });
 
-    if (unused != "") {
-	cout << "Unused arguments: " << unused << endl;
+            if (it == data.end())
+            {
+                cout << "No assignment found with id: " << *b << endl;
+            }
+            else
+            {
+                ++count;
+                it->mark_complete();
+            }
+        }
+        ++b;
+    }
+    sort(data.begin(), data.end());
+    write();
+    cout << count << " Assignment(s) updated." << endl;
+
+    if (unused != "") 
+    {
+	    cout << "Unused arguments: " << unused << endl;
     }
 }
 
