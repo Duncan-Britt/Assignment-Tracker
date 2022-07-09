@@ -33,7 +33,7 @@ void Interface::run_console()
         cout << endl;
     }
                 
-    cout << "Enter i to display instructions. Enter quit or end-of-file to quit.\n\n"
+    cout << "Enter 'i' to display instructions. Enter 'quit' or end-of-file to exit.\n\n"
          << "atrack(v" << V << ")> ";
 
     string input;

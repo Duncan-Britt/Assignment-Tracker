@@ -261,30 +261,37 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
             options.list_descending = false;
         else if (*arg_it == "course") {
             ++arg_it;
-	    if (arg_it != arg_end) {	       
-		options.list_course = *arg_it;
-	    } else {
-		cout << "Expected [course name] after arg: course" << endl;
-		return;
-	    }
-        } else if (*arg_it == "offset") {
+
+	        if (arg_it != arg_end) 
+            {	       
+		        options.list_course = *arg_it;
+	        } 
+            else 
+            {
+		        cout << "Expected [course name] after arg: course" << endl;
+		        return;
+	        }
+        } 
+        else if (*arg_it == "offset") {
             if (++arg_it != arg_end)
-	    {
-		if (is_num(*arg_it))
-		{    
-		    options.offset = stoi(*arg_it);
-		}
-		else
-		{
-		    cout << "Expected " << *arg_it << " to be an integer." << endl;
-		}			
-	    }
-	    else
-	    {
-		cout << "Expected [N] after arg: offset" << endl;
-		return;
-	    }
-        } else {
+	        {
+		        if (is_num(*arg_it))
+		        {    
+		            options.offset = stoi(*arg_it);
+		        }
+		        else
+		        {
+		            cout << "Expected " << *arg_it << " to be an integer." << endl;
+		        }			
+	        }
+	        else
+	        {
+		        cout << "Expected [N] after arg: offset" << endl;
+		        return;
+	        }
+        } 
+        else 
+        {
             cout << "Unknown arg: " << *arg_it << endl;
         }
 
