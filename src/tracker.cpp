@@ -152,8 +152,12 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
         if (!options.list_unavailable && !b->is_available())
             continue;
 
-        if (options.list_course != "all" && options.list_course != b->get_course())
-            continue;
+        if (options.list_courses.size() != 0)
+        {
+            vector<string>::const_iterator it = find(options.list_courses.begin(), options.list_courses.end(), b->get_course());
+            if (it == options.list_courses.end())
+                continue;
+        }
 
         if (options.limit_date)
             if (!options.list_descending && before(options.date_limit, b->get_due_date()))
@@ -174,6 +178,16 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
     }
 
     format_print(assignments_to_display);
+
+    vector<string> courses;
+    get_courses(courses);
+    for (const string& course_name : options.list_courses)
+    {
+        if (find(courses.begin(), courses.end(), course_name) == courses.end())
+        {
+            cout << "Unknown course: " << course_name << endl;
+        }
+    }
 }
 
 bool Tracker::is_num(const string& s)
@@ -244,6 +258,11 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
     {
         if (*arg_it == "past") 
             options.list_past = true;
+        else if (*arg_it == "week")
+        {
+            options.limit_date = true;
+            set_one_week_from_today(&options.date_limit);
+        }
         else if (is_date(*arg_it)) {
             options.limit_date = true;
             read_date(*arg_it, options.date_limit);
@@ -259,19 +278,6 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
             options.list_descending = true;
         else if (*arg_it == "asc") // DEFAULT
             options.list_descending = false;
-        else if (*arg_it == "course") {
-            ++arg_it;
-
-	        if (arg_it != arg_end) 
-            {	       
-		        options.list_course = *arg_it;
-	        } 
-            else 
-            {
-		        cout << "Expected [course name] after arg: course" << endl;
-		        return;
-	        }
-        } 
         else if (*arg_it == "offset") {
             if (++arg_it != arg_end)
 	        {
@@ -290,9 +296,9 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
 		        return;
 	        }
         } 
-        else 
+        else // Assume Arg is course name
         {
-            cout << "Unknown arg: " << *arg_it << endl;
+            options.list_courses.emplace_back(*arg_it);
         }
 
         ++arg_it;
@@ -573,11 +579,23 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
     }
 }
 
-void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<std::string>::const_iterator e_args)
+void Tracker::get_courses(vector<string>& courses) const
 {
-    map<string, Assignment*> courses;
+    map<string, bool> course_map;
+    for (const Assignment& a : data)
+    {
+        if (course_map.count(a.get_course()) != 1)
+        {
+            course_map[a.get_course()] = true;
+            courses.emplace_back(a.get_course());
+        }
+    }
+}
 
-    for (Assignment& a : data) // Map course to next relevant assignment  
+// Map course to next relevant assignment
+void Tracker::get_courses_map(map<string, Assignment*>& courses)
+{
+    for (Assignment& a : data)  
     {
         if (courses.count(a.get_course()) == 1) // Course in map already
         {
@@ -595,6 +613,13 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
             courses[a.get_course()] = &a;
         }
     }
+}
+
+void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<std::string>::const_iterator e_args)
+{
+    map<string, Assignment*> courses;
+
+    get_courses_map(courses);
 
     vector<Assignment*> partitioned_assignments; // Make vector of <Assignment*> from distinct course map values
     transform(courses.begin(), courses.end(), back_inserter(partitioned_assignments), [](const pair<string, Assignment*>& p) { 
@@ -640,10 +665,11 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
                  << string(DUE_IN_WIDTH - due_in.size(), ' ') << due_in << endl;
         }
     }
-    
+    cout << endl;
+
     if (b_args != e_args && ( *b_args == "a" || *b_args == "p")) // if list past courses
     {
-        cout << endl << " Past courses:" << endl;
+        cout << " Past courses:" << endl;
         for (vector<Assignment*>::const_iterator it = partitioned_assignments.begin(); it != upcoming; ++it)
             cout << "   " << (*it)->get_course() << endl;
         
@@ -706,12 +732,12 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
     else
     {
         static const string LIST = "===============================================\n"
-                                   "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
+                                   "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
                                    "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                    "Display assignments using:\n"
-                                   "    list [ past ] [ N ] [ MM-DD-YYYY ] [ asc | desc ] [ offset N ]\n"
-                                   "         [ (todo | done) ] [ course name ] [ available ]\n\n"
+                                   "    list [ past ] [ N ] [ (MM-DD-YYYY | week) ] [ asc | desc ] [ offset N ]\n"
+                                   "         [ (todo | done) ] [ COURSE_NAME... ] [ available ]\n\n"
                                 
                                    "past\n"
                                    "        View past assignments.\n\n"
@@ -720,6 +746,8 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                    "        Must be an integer.\n\n"
                                    "MM-DD-YYYY\n"
                                    "        View assignments due up until specified date.\n\n"
+                                   "week\n"
+                                   "        View assignments due this week\n\n"
                                    "asc\n"
                                    "        View results in ascending order, by due date.\n" 
                                    "        This is dones by default, and is therefore redundant.\n\n"
@@ -731,19 +759,20 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                    "        View only unfinished assignments.\n\n"
                                    "done\n"
                                    "        View only completed assignments\n\n"
-                                   "course NAME\n"
-                                   "        View only assignments due for a course\n\n"
+                                   "[COURSE_NAME...]\n"
+                                   "        View only assignments for course(s)\n\n"
                                    "available\n"
                                    "        Filter out unavailable assignments.\n\n"
 
                                    "i.e.\n"
                                    "        list\n"
                                    "        list past 5 desc\n"
-                                   "        list course \"CSC 1061\" 07-01-2022\n"
-                                   "        list done offset 4\n\n";
+                                   "        list \"CSC 1061\" 07-01-2022\n"
+                                   "        list done offset 4\n"
+                                   "        list week desc 5 \"CSC 1061\" CALC1\n";
         
         static const string SHOW = "===============================================\n"
-                                   "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
+                                   "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
                                    "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                    "Display details for one or more assignments using:\n"
@@ -751,10 +780,10 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
 
                                    "i.e.\n"
                                    "        show 1\n"
-                                   "        show 1 5 8\n\n";
+                                   "        show 1 5 8\n";
 
         static const string ADD = "===============================================\n"
-                                  "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
+                                  "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
                                   "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                   "Add new assignment using:\n"
@@ -767,11 +796,11 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                   "            course \"CALC 201\" available 06-13-2022\n\n"
 
                                   "        add \"M2 Paper\" \"On Ancient Rome\" 06-20-2022\n"
-                                  "            course \"HIST 320\"\n\n";
+                                  "            course \"HIST 320\"\n";
 
 
         static const string EDIT = "===============================================\n"
-                                   "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
+                                   "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
                                    "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                    "Update an assignment's info using:\n"
@@ -781,30 +810,31 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
 
                                    "i.e.\n"
                                    "        edit 25 due 08-01-2022\n"
-                                   "        edit 9 complete\n\n";
+                                   "        edit 9 complete\n";
 
         static const string REMOVE = "===============================================\n"
-                                     "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
+                                     "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
                                      "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                      "Delete an assignment using:\n"
                                      "remove ID\n\n"
 
                                      "i.e.\n"
-                                     "          remove 4\n\n";
+                                     "          remove 4\n";
 
         static const string COMPLETE = "===============================================\n"
-                                       "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
+                                       "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
                                        "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                        "Mark assignment complete using:\n"
-                                       "complete ID\n\n"
+                                       "complete ID...\n\n"
 
                                        "i.e.\n"
-                                        "       complete 10\n\n";
+                                        "       complete 10\n"
+                                        "       complete 2 3 5\n";
 
         static const string LC = "===============================================\n"
-                                 "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
+                                 "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
                                  "\"Multi word arguments must be enclose in quotes.\"\n\n"
                                  
                                  "List courses using:\n"
@@ -818,21 +848,21 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
                                  "i.e.\n"
                                  "      lc\n"
                                  "      lc a\n"
-                                 "      lc p\n\n";                               
+                                 "      lc p\n";                               
 
         static const string DC = "===============================================\n"
-                                 "command argment (either | or) [ optional ] DATA (...ONE_OR_MORE)\n"
+                                 "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
                                  "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
                                  "Delete all assignments for a given course using:\n"
                                  "      dc COURSE\n\n"
 
                                  "i.e.\n"
-                                 "      dc CALC 2001\n\n";
+                                 "      dc CALC 2001\n";
 
         static const string QUIT = "===============================================\n"
                                    "End program using:\n"
-	                           "      (quit | end-of-file)\n\n";
+	                           "      (quit | end-of-file)\n";
                                    
 
         static map<string, string> command_info = {

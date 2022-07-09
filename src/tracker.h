@@ -8,13 +8,14 @@
 #include <sstream>
 #include <ctime>
 #include <string>
+#include <map>
 
 typedef struct ListOptions {
     bool list_past = false;
     bool list_todo = true;
     bool list_done = true;
     bool list_unavailable = true;
-    std::string list_course = "all";
+    std::vector<std::string> list_courses;
     bool list_descending = false;
     std::vector<Assignment>::size_type limit;
     std::vector<Assignment>::size_type offset = 0;
@@ -51,6 +52,8 @@ public:
     Assignment* next();
 
 private:
+    void get_courses_map(std::map<std::string, Assignment*>&);
+    void get_courses(std::vector<std::string>&) const;
     void write() const;
     unsigned long long next_id = 0;
     std::string::size_type width(std::string(const Assignment&)) const;

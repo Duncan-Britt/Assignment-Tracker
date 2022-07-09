@@ -9,6 +9,14 @@ typedef struct tm Date;
 
 using namespace std;
 
+void set_one_week_from_today(Date* date)
+{
+    time_t now = time(NULL);
+    time_t SECONDS_PER_WEEK = 604800;
+    time_t one_week_from_today = now + SECONDS_PER_WEEK;
+    *date = *localtime(&one_week_from_today);
+}
+
 int days_from_now(Date date)
 {
     time_t now = time(NULL);

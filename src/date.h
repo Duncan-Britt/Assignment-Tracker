@@ -10,5 +10,6 @@ bool is_date(const std::string&);
 void read_date(const std::string&, struct tm& d);
 int day_of_year(const struct tm& d);
 bool is_leap_year(const int yr);
+void set_one_week_from_today(struct tm*);
 
 #endif
