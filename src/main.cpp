@@ -1,3 +1,7 @@
+// Duncan Britt
+// CSC 1061 Capstone Project
+// July 17, 2022
+
 #include <iostream>
 #include <ctime>
 #include "interface.h"
@@ -51,14 +55,14 @@ int main(int argc, char** argv)
         if (get_dir(dir, 300) != NULL)
         {
             cout << "There was an error reading your saved data.\n"
-		 << "Inspect " << dir << path_suffix << "data.txt" << endl;
+		         << "Inspect " << dir << path_suffix << "data.txt" << endl;
         }
         pause;
         return 1;
     }
     
     Interface app(assignments);
-   
+    
     app.run_console();
     cout << "\nTa-ta for now!\n\n";
 

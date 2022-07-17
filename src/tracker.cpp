@@ -49,7 +49,7 @@ void Tracker::read(ifstream& in)
 
     while (getline(in, s))
     {
-        istringstream iss(s);
+        istringstream saved_assignment(s);
 
         unsigned long long id;
         bool done;
@@ -59,13 +59,13 @@ void Tracker::read(ifstream& in)
         string due_str;
         string available_str;
 
-        iss >> id >> done;
+        saved_assignment >> id >> done;
 
-        read_quoted(iss, back_inserter(title));
-        read_quoted(iss, back_inserter(description));
-        read_quoted(iss, back_inserter(course));
+        read_quoted(saved_assignment, back_inserter(title));
+        read_quoted(saved_assignment, back_inserter(description));
+        read_quoted(saved_assignment, back_inserter(course));
 
-        iss >> due_str >> available_str;
+        saved_assignment >> due_str >> available_str;
 
         time_t t = time(NULL);
 
