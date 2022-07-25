@@ -45,7 +45,10 @@ void Interface::run_console()
         if (err.size() == 0)
         {
             if (args.begin() != args.end() && *args.begin() == "quit")
+            {
                 break;
+            }
+
             eval(args.begin(), args.end());
         }
         else 
@@ -65,7 +68,7 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
     if (command == "list")
         assignments.list(b, e);
     else if (command == "show")
-        assignments.show(b, e); // allow multiple ids
+        assignments.show(b, e);
     else if (command == "add")
         assignments.add(b, e);
     else if (command == "edit")

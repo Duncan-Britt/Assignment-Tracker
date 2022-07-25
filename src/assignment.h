@@ -6,11 +6,15 @@
 
 class Assignment
 {
+// Class represents a single assignment. 
+// Contains getters and setters for the title, description, course, due date, availability date, and completion status of an assignment
 typedef struct tm Date;    
 
 public: 
     Assignment(unsigned long long i, bool tf, std::string t, std::string d, std::string c, Date due, Date a)
     : id(i), complete(tf), title(t), description(d), course(c), due_date(due), available(a) {}
+    // Constructor to initialize member variables
+
     unsigned long long get_id() const { return id; }
     std::string get_title() const { return title; }
     std::string get_description() const { return description == "" ? "No description" : description; }

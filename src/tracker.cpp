@@ -9,6 +9,7 @@
 #include <regex>
 #include <fstream>
 #include <map>
+#include <cctype>
 #include "date.h"
 
 using namespace std;
@@ -16,7 +17,7 @@ using namespace std;
 typedef struct tm Date;
 typedef vector<Assignment>::const_iterator iter;
 
-int isdash(int c)
+int isdash(int c) // needs to be int, not bool
 {
     return c == '-';
 }
@@ -46,7 +47,9 @@ Assignment* Tracker::next()
 void Tracker::read(ifstream& in)
 {
     string s;
-
+    // using knowledge of format of saved data, read each line
+    // and construct an Assignment from saved data
+    // Append each assignment to data
     while (getline(in, s))
     {
         istringstream saved_assignment(s);
@@ -113,10 +116,12 @@ string::size_type Tracker::width(vector<Assignment*>::const_iterator b, vector<A
 
 void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end) const
 {
+    // convert user arguments into legible data structure
     ListOptions options;
     options.limit = data.size();
     read_args_list(arg_it, arg_end, options);
 
+    // Reverse order of assignments if displaying in descending order
     vector<iter> assignments_to_display; 
     vector<Assignment> reversed;
     iter b;
@@ -136,6 +141,7 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
     vector<Assignment>::size_type count = 0;
     vector<Assignment>::size_type offset = options.offset;
 
+    // Filter out assignments specified by options
     for (; b != e && count < options.limit; ++b) {
         if (b->past() && !options.list_past)
             continue;
@@ -197,6 +203,7 @@ bool Tracker::is_num(const string& s)
 
 bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::const_iterator e, AddInfo& info) const
 {
+    // turn user arguments into a data structure (options) with the relavent needed by Tracker::add
     if (b == e) 
     {
         cout << "Insufficient args. Enter i add for more info." << endl;
@@ -249,11 +256,22 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
         }
     }
 
+    trim(info.title);
+    trim(info.description);
+    trim(info.course);
+
     return true;
+}
+
+void Tracker::trim(string& s) const
+{ // Remove leading and trailing whitespace
+    s.erase(s.begin(), find_if(s.begin(), s.end(), [](char c) { return !isspace(c); }));
+    s.erase(find_if(s.rbegin(), s.rend(), [](char c) { return !isspace(c); }).base(), s.end());
 }
 
 void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end, ListOptions& options) const
 {
+    // turn user arguments into a data structure (options) with the relavent needed by Tracker::list
     while (arg_it != arg_end) 
     {
         if (*arg_it == "past") 
@@ -307,22 +325,26 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
 
 void Tracker::format_print(vector<iter>& assignments) const
 {
+    // Get max width for each column
     const string::size_type TITLE_WIDTH = min((int) max(width([](const Assignment& a) { return a.get_title(); }), string("Title").size()), 50);
     const string::size_type COURSE_WIDTH = max(width([](const Assignment& a){ return a.get_course(); }), string("Course").size());
     const string::size_type DATE_WIDTH = 10;
     const string::size_type ID_WIDTH = max(width([](const Assignment& a){ return to_string(a.get_id()); }), string("ID").size());
-
+    
+    // Print column headings with appropriate whitespace
     cout << " " << "Title" << string(TITLE_WIDTH - string("title").size(), ' ') << " | "
          << "ID" << string(ID_WIDTH - string("ID").size(), ' ') << " | "
          << "Course" << string(COURSE_WIDTH - string("Course").size(), ' ') << " | "
          << "Due" << string(DATE_WIDTH - string("Due").size(), ' ') << " | "
          << "Available  | Complete" << endl;
     
+    // Print spacer
     cout << string(TITLE_WIDTH + 2, '-') << '+' << string(ID_WIDTH + 2, '-') << '+'
          << string(COURSE_WIDTH + 2, '-') << '+' << string(DATE_WIDTH + 2, '-') 
          << '+' << string(DATE_WIDTH + 2, '-') << '+'
          << string(2 + string("Complete").size(), '-') << endl;
 
+    // Print each row with data for an assignment, using appropriate white space
     for (vector<iter>::const_iterator it = assignments.begin(); it < assignments.end(); ++it)
     {
         string title = (*it)->get_title();
@@ -369,7 +391,8 @@ void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterat
 }
 
 void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_iterator e) 
-{
+{ 
+    // Validate ID
     if (b == e)
     {
 	cout << "You must specify the ID of the assignment to edit, and what you would like to change." << endl;
@@ -393,22 +416,30 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
     ++b;
     
+    // edit the specified fields of a specified assignment.
+    // Notify the user if input is in error
     while (b != e)
     {
         if (*b == "course")
         {
             ++b;
-            it->set_course(*b);
+            string crse = *b;
+            trim(crse);
+            it->set_course(crse);
         }
         else if (*b == "title")
         {
             ++b;
-            it->set_title(*b);
+            string ttle = *b;
+            trim(ttle);
+            it->set_title(ttle);
         }
         else if (*b == "description")
         {
             ++b;
-            it->set_description(*b);
+            string dscrptn = *b;
+            trim(dscrptn);
+            it->set_description(dscrptn);
         }
         else if (*b == "due")
         {
@@ -459,6 +490,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
         ++b;
     }
 
+    // Save changes, notify user of success.
     sort(data.begin(), data.end());
     write();
     cout << "Assignment updated." << endl;
@@ -497,6 +529,8 @@ void Tracker::show(unsigned long long id) const
 
 void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_iterator e) 
 {
+    // If id is present, valid, and an assignment exists with said id, remove the assignment and notify the user.
+    // Otherwise, notify the user of the error. Notify the user of any unused arguments.
     if (b == e) {
         cout << "Remove aborted. You must specify the ID of the assignment to remove." << endl;
         return;
@@ -545,6 +579,8 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
     
     string unused = "";
     unsigned count = 0;
+
+    // Validate assignment ids and mark assignments complete. Track how many assignments are updated.
     while (b != e)
     {
         if (!is_num(*b))
@@ -618,8 +654,7 @@ void Tracker::get_courses_map(map<string, Assignment*>& courses)
 void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<std::string>::const_iterator e_args)
 {
     map<string, Assignment*> courses;
-
-    get_courses_map(courses);
+    get_courses_map(courses); // Associates course with pointer to next assignment
 
     vector<Assignment*> partitioned_assignments; // Make vector of <Assignment*> from distinct course map values
     transform(courses.begin(), courses.end(), back_inserter(partitioned_assignments), [](const pair<string, Assignment*>& p) { 
@@ -634,7 +669,7 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
         return !a->past() && !a->completed();
     });
 
-    if (b_args == e_args || *b_args != "p") // if list current courses
+    if (b_args == e_args || *b_args != "p") // if list current courses, print currnet courses as table
     {
         const string::size_type UPCOMING_COURSE_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a){ return a->get_course(); }), string("Course").size());
         const string::size_type NEXT_ASSIGNMENT_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a){ return a->get_title(); }), string("Next Assignment").size());
@@ -667,7 +702,7 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
     }
     cout << endl;
 
-    if (b_args != e_args && ( *b_args == "a" || *b_args == "p")) // if list past courses
+    if (b_args != e_args && ( *b_args == "a" || *b_args == "p")) // if list past courses, print past courses
     {
         cout << " Past courses:" << endl;
         for (vector<Assignment*>::const_iterator it = partitioned_assignments.begin(); it != upcoming; ++it)
@@ -676,7 +711,7 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
         cout << endl;
     }
 
-    if (b_args != e_args) 
+    if (b_args != e_args) // Notify user of unused arguments
     {
         if ((*b_args != "a" && *b_args != "p") || (++b_args != e_args))
         {
@@ -699,7 +734,9 @@ void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterato
     }
 
     vector<Assignment>::size_type n_before = data.size();
+    // Iterate through courses from b to e.
     while (b != e) {
+        // Remove assignments associated with the course *b
         const string& course_name = *b;
         data.erase(
             remove_if(data.begin(), data.end(), [course_name](const Assignment& a) { return a.get_course() == course_name; }),
@@ -709,7 +746,7 @@ void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterato
         ++b;
     }
 
-    write();
+    write(); // Save changes
 
     cout << "Removed " << n_before - data.size() << " assignment(s)" << endl;
 }

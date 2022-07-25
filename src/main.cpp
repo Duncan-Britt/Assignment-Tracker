@@ -40,14 +40,17 @@ char* get_dir(char* buffer, size_t size)
 
 #endif
 
+// Initialize a collection of assignments using data from data.txt
+// Start main loop of program: app.run_console();
+// Includes some error handling in case saved data becomes corrupted somehow.
 int main(int argc, char** argv) 
 {
-    ifstream ifs("data.txt");
+    ifstream saved("data.txt");
 
     Tracker assignments;
     try
     {
-        assignments.read(ifs);
+        assignments.read(saved);
     }
     catch (...)
     {
