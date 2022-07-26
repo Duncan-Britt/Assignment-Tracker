@@ -17,7 +17,7 @@ using namespace std;
 typedef struct tm Date;
 typedef vector<Assignment>::const_iterator iter;
 
-int isdash(int c) // needs to be int, not bool
+int isdash(int c) // needs to return int, not bool
 {
     return c == '-';
 }
@@ -167,14 +167,15 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
 
         if (options.limit_date)
             if (!options.list_descending && before(options.date_limit, b->get_due_date()))
-	    {
+	        {
                 break;
-	    }
+	        }
 	    else if (options.list_descending && before(options.date_limit, b->get_due_date()))
 	    {
-		continue;
+		    continue;
 	    }
-        if (offset > 0) {
+        if (offset > 0) 
+        {
             --offset;
             continue;
         }
@@ -203,7 +204,7 @@ bool Tracker::is_num(const string& s)
 
 bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::const_iterator e, AddInfo& info) const
 {
-    // turn user arguments into a data structure (options) with the relavent needed by Tracker::add
+    // turn user arguments into a data structure (info) with the relavent needed by Tracker::add
     if (b == e) 
     {
         cout << "Insufficient args. Enter i add for more info." << endl;

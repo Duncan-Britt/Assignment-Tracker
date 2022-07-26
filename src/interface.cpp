@@ -13,10 +13,10 @@ using std::cin;         using std::vector;
 using std::endl;        using std::to_string;
 // "using namespace std" causes error when invoking Interface::split
 
-const string V = "0.1.0";
-
 void Interface::run_console()
 {
+    static const string V = "0.1.0";
+
     cout << "\nAssignment Tracker " << V << "\n"
             "Copyright (C) 2022 Duncan Britt\n\n"
             "Welcome.\n";
@@ -36,6 +36,8 @@ void Interface::run_console()
     cout << "Enter 'i' to display instructions. Enter 'quit' or end-of-file to exit.\n\n"
          << "atrack(v" << V << ")> ";
 
+    // MAIN PROGRAM LOOP
+    // Read. Evaluate. (Print).
     string input;
     vector<string> args;
     while (getline(cin, input))
@@ -51,8 +53,10 @@ void Interface::run_console()
 
             eval(args.begin(), args.end());
         }
-        else 
+        else
+        {
             cout << err << endl;
+        }
 
         cout << "atrack(v" << V << ")> ";
     }
@@ -65,6 +69,8 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
 
     string command = *b++;
     
+    // Invoke the function corresponding to the user's command
+    // Pass the user-specified arguments
     if (command == "list")
         assignments.list(b, e);
     else if (command == "show")

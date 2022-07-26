@@ -44,7 +44,7 @@ public:
 
     void show(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator) const;
     void show(unsigned long long) const;
-    // Display an assignment(s) in detail
+    // Display assignment(s) in detail
 
     void list(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator) const;
     // Display existing assignments
@@ -68,7 +68,6 @@ public:
     // Delete all assignments associated with a given course.
 
     void i(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
-    // Takes user arguments which should either be empty or contain the name of a command
     // Displays instructions for the user. Displays specific instructions for a specific command if specified.
 
     static bool is_num(const std::string&);
@@ -78,7 +77,7 @@ public:
     // Determines whether all assignments have been completed.
 
     Assignment* next();
-    // Returns a pointer to the next assignment that is due.
+    // Returns a pointer to the next assignment that is due, or nullptr
 
 private:
     void get_courses_map(std::map<std::string, Assignment*>&);
