@@ -14,13 +14,14 @@ public:
     template <class Out, class Predicate>
     static std::string split(const std::string& s, Out os, Predicate p) {
 		// splits a string into multiple strings deliminated by a character specified by a predicate.
-		// Does not split up characters enclosed in double quotes "
+		// Does not split up characters enclosed in double quotes
     	std::string::const_iterator it = s.begin();
-		while ( it < s.end())
+		while (it < s.end())
 		{
 			std::string::const_iterator jt = it;
 			if (*jt == '"')
-			{
+			{ // Preserve the quoted portion of the string
+			  // Ignore deliminating characters within quoted portion
 				++jt;
 				while (jt < s.end() && *jt != '"')
 				{

@@ -25,6 +25,8 @@ bool Assignment::is_available() const
 
 bool Assignment::operator<(const Assignment& other) const
 {
+    // comparison based on date first, and then completion status if dates are equal
+    // Incomplete comes before complete
     return before(due_date, other.due_date) || 
                (!before(other.due_date, due_date) && 
                 !complete && other.complete);

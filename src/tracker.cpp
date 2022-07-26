@@ -49,7 +49,7 @@ void Tracker::read(ifstream& in)
     string s;
     // using knowledge of format of saved data, read each line
     // and construct an Assignment from saved data
-    // Append each assignment to data
+    // Append each assignment to data collection
     while (getline(in, s))
     {
         istringstream saved_assignment(s);

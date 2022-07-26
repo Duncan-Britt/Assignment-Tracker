@@ -55,10 +55,11 @@ bool is_date(const string& s)
     int day = stoi(s.substr(3, 2));
 
     static const int map_month_days[2][12] = {
-	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
-	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+	    { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+	    { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
     };
-    
+    // check day is 1 through the last day of the month
+    // Check for leap year since February is longer
     return 0 < day && day <= map_month_days[is_leap_year(year)][month-1];
 }
 
