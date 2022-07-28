@@ -27,9 +27,9 @@ bool Assignment::operator<(const Assignment& other) const
 {
     // comparison based on date first, and then completion status if dates are equal
     // Incomplete comes before complete
-    return before(due_date, other.due_date) || 
-               (!before(other.due_date, due_date) && 
-                !complete && other.complete);
+    return before(due_date, other.due_date) ||
+        (!before(other.due_date, due_date) &&
+            !complete && other.complete);
 }
 
 string Assignment::get_due() const
@@ -50,18 +50,18 @@ string Assignment::get_available() const
 
 std::ostream& operator<<(std::ostream& out, const Assignment& assignment)
 {
-    out << assignment.get_course() << " " << assignment.get_title()
-        << " " << (assignment.completed() ? "Complete" : "Incomplete")
-        << endl << assignment.get_description() << endl;
+    out << assignment.get_course() << ": " << assignment.get_title() << endl
+        << assignment.get_description() << endl
+        << "Status: " << (assignment.completed() ? "Complete" : "Incomplete") << endl;
 
-        if (assignment.past()) {
-            return out << "Was due : " << assignment.get_due();
-        } 
+    if (assignment.past()) {
+        return out << "Was due : " << assignment.get_due();
+    }
 
-        unsigned due_in = days_from_now(assignment.get_due_date());
-        if (due_in == 0) {
-            return out << "Due today.";
-        }
-        
-        return out << "Due in " << due_in << " days.";
+    unsigned due_in = days_from_now(assignment.get_due_date());
+    if (due_in == 0) {
+        return out << "Due today.";
+    }
+
+    return out << "Due in " << due_in << " days.";
 }

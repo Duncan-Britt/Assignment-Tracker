@@ -1,16 +1,15 @@
 #include "date.h"
-#include "interface.h" // defines split
-#include "tracker.h" // defines is_dash
 #include <ctime>
 #include <cmath>
 #include <regex>
+#include "string_utility.h"
 
 typedef struct tm Date;
 
 using namespace std;
 
 void set_one_week_from_today(Date* date)
-{
+{ // make date one week from today buy adding seconds to current time
     time_t now = time(NULL);
     time_t SECONDS_PER_WEEK = 604800;
     time_t one_week_from_today = now + SECONDS_PER_WEEK;
@@ -18,7 +17,7 @@ void set_one_week_from_today(Date* date)
 }
 
 int days_from_now(Date date)
-{
+{ // determine the number of days from now
     time_t now = time(NULL);
     Date* _now = localtime(&now);
     _now->tm_hour = 0;
@@ -29,7 +28,7 @@ int days_from_now(Date date)
 }
 
 bool before(const Date& a, const Date& b)
-{
+{ // compare dates by year, month, and finally day
     if (a.tm_year == b.tm_year)
         if (a.tm_mon == b.tm_mon)
             return a.tm_mday < b.tm_mday;
@@ -40,33 +39,33 @@ bool before(const Date& a, const Date& b)
 }
 
 bool is_date(const string& s)
-{
+{ // Validate a date string MM-DD-YYYY
     if (!regex_match(s, regex("[0-9]{2}-[0-9]{2}-[0-9]{4}"))) {
-	return false;
+        return false;
     }
 
-    int month = stoi(s.substr(0,2));
-    
+    int month = stoi(s.substr(0, 2));
+
     if (!(0 < month && month < 13)) {
-	return false;
+        return false;
     }
 
     int year = stoi(s.substr(6, 4));
     int day = stoi(s.substr(3, 2));
 
     static const int map_month_days[2][12] = {
-	    { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
-	    { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+        { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+        { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
     };
     // check day is 1 through the last day of the month
     // Check for leap year since February is longer
-    return 0 < day && day <= map_month_days[is_leap_year(year)][month-1];
+    return 0 < day && day <= map_month_days[is_leap_year(year)][month - 1];
 }
 
 void read_date(const string& s, Date& d)
-{
+{ // Populate struct tm from date string 
     vector<string> date_components;
-    string err = Interface::split(s, back_inserter(date_components), [](int c){ return (int)(c == '-');});
+    string err = split(s, back_inserter(date_components), [](int c) { return (int)(c == '-'); });
     if (err.size() != 0)
         throw runtime_error(err);
 
@@ -85,12 +84,12 @@ void read_date(const string& s, Date& d)
 }
 
 bool is_leap_year(const int yr)
-{
+{ // determine if it is a leap year
     return yr % 4 == 0 && (yr % 100 != 0 || yr % 400 == 0);
 }
 
 int day_of_year(const Date& d)
-{
+{ // return the day of the year, considering whether it is  a leap year
     static const int map_month_ydays[2][12] = {
         { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 },
         { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335},

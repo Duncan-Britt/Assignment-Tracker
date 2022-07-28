@@ -11,11 +11,28 @@
 #include <map>
 #include <cctype>
 #include "date.h"
+#include "string_utility.h"
 
 using namespace std;
 
 typedef struct tm Date;
 typedef vector<Assignment>::const_iterator iter;
+
+string lowercase(const string& s)
+{
+    string res;
+    transform(s.begin(), s.end(), back_inserter(res), [](int c) {
+        if (isalpha((char)c))
+        {
+            return (int)tolower((char)c);
+        }
+        else
+        {
+            return (int)c;
+        }
+        });
+    return res;
+}
 
 int isdash(int c) // needs to return int, not bool
 {
@@ -33,7 +50,7 @@ bool Tracker::completed() const
 }
 
 Assignment* Tracker::next()
-{ 
+{
     for (vector<Assignment>::size_type i = 0; i < data.size(); ++i) {
         if (!data[i].completed() && !data[i].past()) {
             Assignment* res = &(data[i]);
@@ -102,6 +119,18 @@ string::size_type Tracker::width(string attr(const Assignment&)) const
     return maxlen;
 }
 
+string::size_type Tracker::width(vector<iter>& assignments, string attr(const Assignment&)) const
+{
+    string::size_type maxlen = 0;
+    for (vector<iter>::const_iterator it = assignments.begin(); it < assignments.end(); ++it)
+    {
+        string::size_type len = attr(*(*it)).size();
+        maxlen = len > maxlen ? len : maxlen;
+    }
+
+    return maxlen;
+}
+
 string::size_type Tracker::width(vector<Assignment*>::const_iterator b, vector<Assignment*>::const_iterator e, string attr(const Assignment*)) const
 {
     string::size_type maxlen = 0;
@@ -122,7 +151,7 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
     read_args_list(arg_it, arg_end, options);
 
     // Reverse order of assignments if displaying in descending order
-    vector<iter> assignments_to_display; 
+    vector<iter> assignments_to_display;
     vector<Assignment> reversed;
     iter b;
     iter e;
@@ -160,21 +189,21 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
 
         if (options.list_courses.size() != 0)
         {
-            vector<string>::const_iterator it = find(options.list_courses.begin(), options.list_courses.end(), b->get_course());
+            vector<string>::const_iterator it = find(options.list_courses.begin(), options.list_courses.end(), lowercase(b->get_course()));
             if (it == options.list_courses.end())
                 continue;
         }
 
         if (options.limit_date)
             if (!options.list_descending && before(options.date_limit, b->get_due_date()))
-	        {
+            {
                 break;
-	        }
-	    else if (options.list_descending && before(options.date_limit, b->get_due_date()))
-	    {
-		    continue;
-	    }
-        if (offset > 0) 
+            }
+            else if (options.list_descending && before(options.date_limit, b->get_due_date()))
+            {
+                continue;
+            }
+        if (offset > 0)
         {
             --offset;
             continue;
@@ -190,7 +219,8 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
     get_courses(courses);
     for (const string& course_name : options.list_courses)
     {
-        if (find(courses.begin(), courses.end(), course_name) == courses.end())
+        if (find_if(courses.begin(), courses.end(), [course_name](const string& saved_course) {
+            return course_name == lowercase(saved_course); }) == courses.end())
         {
             cout << "Unknown course: " << course_name << endl;
         }
@@ -205,9 +235,14 @@ bool Tracker::is_num(const string& s)
 bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::const_iterator e, AddInfo& info) const
 {
     // turn user arguments into a data structure (info) with the relavent needed by Tracker::add
-    if (b == e) 
+    if (b == e)
     {
         cout << "Insufficient args. Enter i add for more info." << endl;
+        return false;
+    }
+    if (b->size() == 0)
+    {
+        cout << "Assignment title must not be empty." << endl;
         return false;
     }
     info.title = *b++;
@@ -231,23 +266,51 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
     }
 
     read_date(*b++, info.due);
-        
+
     while (b != e)
     {
-        if (*b == "course") 
+        if (lowercase(*b) == "course")
         {
             ++b;
-            info.course = *b++;
+            if (b == e)
+            {
+                cout << "Error: Expected course name." << endl;
+                return false;
+            }
+
+            string course_name = *b;
+            trim(course_name);
+
+            // if course exists, preserve existing case
+            vector<Assignment>::const_iterator it = find_if(data.begin(), data.end(), [course_name](Assignment a) {
+                return lowercase(a.get_course()) == lowercase(course_name);
+            });
+            if (it == data.end())
+            {
+                info.course = course_name;
+            }
+            else
+            {
+                info.course = it->get_course();
+                ++b;
+            }
         }
-        else if (*b == "available")
+        else if (lowercase(*b) == "available")
         {
             ++b;
-	    if (!is_date(*b))
-	    {
-		cout << "Malformed due date: " << *b << endl
-		     << "Expected MM-DD-YYYY" << endl;
-		return false;
-	    }
+            if (b == e)
+            {
+                cout << "Error: Expected availability: MM-DD-YYYY" << endl;
+                return false;
+            }
+
+            if (!is_date(*b))
+            {
+                cout << "Malformed due date: " << *b << endl
+                    << "Expected MM-DD-YYYY" << endl;
+                return false;
+            }
+
             read_date(*b++, info.available);
         }
         else
@@ -259,25 +322,18 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
 
     trim(info.title);
     trim(info.description);
-    trim(info.course);
 
     return true;
-}
-
-void Tracker::trim(string& s) const
-{ // Remove leading and trailing whitespace
-    s.erase(s.begin(), find_if(s.begin(), s.end(), [](char c) { return !isspace(c); }));
-    s.erase(find_if(s.rbegin(), s.rend(), [](char c) { return !isspace(c); }).base(), s.end());
 }
 
 void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<string>::const_iterator arg_end, ListOptions& options) const
 {
     // turn user arguments into a data structure (options) with the relavent needed by Tracker::list
-    while (arg_it != arg_end) 
+    while (arg_it != arg_end)
     {
-        if (*arg_it == "past") 
+        if (lowercase(*arg_it) == "past")
             options.list_past = true;
-        else if (*arg_it == "week")
+        else if (lowercase(*arg_it) == "week")
         {
             options.limit_date = true;
             set_one_week_from_today(&options.date_limit);
@@ -285,39 +341,40 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
         else if (is_date(*arg_it)) {
             options.limit_date = true;
             read_date(*arg_it, options.date_limit);
-        } else if (is_num(*arg_it))
+        }
+        else if (is_num(*arg_it))
             options.limit = stoi(*arg_it);
-        else if (*arg_it == "todo")
+        else if (lowercase(*arg_it) == "todo")
             options.list_done = false;
-        else if (*arg_it == "done")
+        else if (lowercase(*arg_it) == "done")
             options.list_todo = false;
-        else if (*arg_it == "available")
+        else if (lowercase(*arg_it) == "available")
             options.list_unavailable = false;
-        else if (*arg_it == "desc")
+        else if (lowercase(*arg_it) == "desc")
             options.list_descending = true;
-        else if (*arg_it == "asc") // DEFAULT
+        else if (lowercase(*arg_it) == "asc") // DEFAULT
             options.list_descending = false;
-        else if (*arg_it == "offset") {
+        else if (lowercase(*arg_it) == "offset") {
             if (++arg_it != arg_end)
-	        {
-		        if (is_num(*arg_it))
-		        {    
-		            options.offset = stoi(*arg_it);
-		        }
-		        else
-		        {
-		            cout << "Expected " << *arg_it << " to be an integer." << endl;
-		        }			
-	        }
-	        else
-	        {
-		        cout << "Expected [N] after arg: offset" << endl;
-		        return;
-	        }
-        } 
+            {
+                if (is_num(*arg_it))
+                {
+                    options.offset = stoi(*arg_it);
+                }
+                else
+                {
+                    cout << "Expected " << *arg_it << " to be an integer." << endl;
+                }
+            }
+            else
+            {
+                cout << "Expected [N] after arg: offset" << endl;
+                return;
+            }
+        }
         else // Assume Arg is course name
         {
-            options.list_courses.emplace_back(*arg_it);
+            options.list_courses.emplace_back(lowercase(*arg_it));
         }
 
         ++arg_it;
@@ -327,23 +384,23 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
 void Tracker::format_print(vector<iter>& assignments) const
 {
     // Get max width for each column
-    const string::size_type TITLE_WIDTH = min((int) max(width([](const Assignment& a) { return a.get_title(); }), string("Title").size()), 50);
-    const string::size_type COURSE_WIDTH = max(width([](const Assignment& a){ return a.get_course(); }), string("Course").size());
+    const string::size_type TITLE_WIDTH = min((int)max(width(assignments, [](const Assignment& a) { return a.get_title(); }), string("Title").size()), 50);
+    const string::size_type COURSE_WIDTH = max(width(assignments, [](const Assignment& a) { return a.get_course(); }), string("Course").size());
     const string::size_type DATE_WIDTH = 10;
-    const string::size_type ID_WIDTH = max(width([](const Assignment& a){ return to_string(a.get_id()); }), string("ID").size());
-    
+    const string::size_type ID_WIDTH = max(width(assignments, [](const Assignment& a) { return to_string(a.get_id()); }), string("ID").size());
+
     // Print column headings with appropriate whitespace
     cout << " " << "Title" << string(TITLE_WIDTH - string("title").size(), ' ') << " | "
-         << "ID" << string(ID_WIDTH - string("ID").size(), ' ') << " | "
-         << "Course" << string(COURSE_WIDTH - string("Course").size(), ' ') << " | "
-         << "Due" << string(DATE_WIDTH - string("Due").size(), ' ') << " | "
-         << "Available  | Complete" << endl;
-    
+        << "ID" << string(ID_WIDTH - string("ID").size(), ' ') << " | "
+        << "Course" << string(COURSE_WIDTH - string("Course").size(), ' ') << " | "
+        << "Due" << string(DATE_WIDTH - string("Due").size(), ' ') << " | "
+        << "Available  | Complete" << endl;
+
     // Print spacer
     cout << string(TITLE_WIDTH + 2, '-') << '+' << string(ID_WIDTH + 2, '-') << '+'
-         << string(COURSE_WIDTH + 2, '-') << '+' << string(DATE_WIDTH + 2, '-') 
-         << '+' << string(DATE_WIDTH + 2, '-') << '+'
-         << string(2 + string("Complete").size(), '-') << endl;
+        << string(COURSE_WIDTH + 2, '-') << '+' << string(DATE_WIDTH + 2, '-')
+        << '+' << string(DATE_WIDTH + 2, '-') << '+'
+        << string(2 + string("Complete").size(), '-') << endl;
 
     // Print each row with data for an assignment, using appropriate white space
     for (vector<iter>::const_iterator it = assignments.begin(); it < assignments.end(); ++it)
@@ -361,9 +418,9 @@ void Tracker::format_print(vector<iter>& assignments) const
         }
 
         cout << " " << string(TITLE_WIDTH - title.size(), ' ') << title << " | "
-             << string(ID_WIDTH - id.size(), ' ') << id << " | " << string(COURSE_WIDTH - course.size(), ' ') << course << " | "
-             << due << " | " << available << " | " << string(string("Complete").size() - 3, ' ') 
-             << completed << endl;
+            << string(ID_WIDTH - id.size(), ' ') << id << " | " << string(COURSE_WIDTH - course.size(), ' ') << course << " | "
+            << due << " | " << available << " | " << string(string("Complete").size() - 3, ' ')
+            << completed << endl;
     }
     cout << endl << endl;
 }
@@ -371,7 +428,7 @@ void Tracker::format_print(vector<iter>& assignments) const
 void Tracker::write() const
 {
     ofstream ofs("data.txt");
-    for(vector<Assignment>::const_iterator it = data.begin(); it < data.end(); ++it)
+    for (vector<Assignment>::const_iterator it = data.begin(); it < data.end(); ++it)
     {
         ofs << it->get_id() << ' ' << it->completed() << " \"" << it->get_title() << '\"'
             << " \"" << it->_get_description() << "\" \"" << it->get_course() << "\" "
@@ -379,7 +436,7 @@ void Tracker::write() const
     }
 }
 
-void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterator e) 
+void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterator e)
 {
     AddInfo info;
     bool ok = read_args_add(b, e, info);
@@ -388,104 +445,154 @@ void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterat
         sort(data.begin(), data.end());
         write();
         cout << "Added " << info.title << endl;
-    } 
+    }
 }
 
-void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_iterator e) 
-{ 
+void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_iterator e)
+{
     // Validate ID
     if (b == e)
     {
-	cout << "You must specify the ID of the assignment to edit, and what you would like to change." << endl;
-	cout << "Enter i edit for more information." << endl;
-	return;
+        cout << "You must specify the ID of the assignment to edit, and what you would like to change." << endl;
+        cout << "Enter i edit for more information." << endl;
+        return;
     }
-    
+
     if (!is_num(*b))
     {
-	cout << "Invalid ID: " << *b << endl;
-	return;
+        cout << "Invalid ID: " << *b << endl;
+        return;
     }
-    vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) { 
-        return a.get_id() == stoi(*b); 
-    });
-    if (it == data.end())
+    vector<Assignment>::iterator assignment_it = find_if(data.begin(), data.end(), [b](Assignment a) {
+        return a.get_id() == stoi(*b);
+        });
+    if (assignment_it == data.end())
     {
         cout << "No assignment found with id: " << *b << endl;
         return;
     }
 
     ++b;
-    
+
     // edit the specified fields of a specified assignment.
     // Notify the user if input is in error
+    bool updated = false;
     while (b != e)
     {
-        if (*b == "course")
+        string field = lowercase(*b);
+        if (field == "course")
         {
             ++b;
+
+            if (b == e)
+            {
+                cout << "Error: Expected course name." << endl;
+                break;
+            }
+
             string crse = *b;
             trim(crse);
-            it->set_course(crse);
+            // if course exists already, preserve case of existing course.
+            vector<Assignment>::iterator found = find_if(data.begin(), data.end(), [crse](Assignment a) { return lowercase(a.get_course()) == lowercase(crse); });
+            if (found != data.end())
+            {
+                assignment_it->set_course(found->get_course());
+            }
+            else
+            {
+                assignment_it->set_course(crse);
+            }
+            updated = true;
         }
-        else if (*b == "title")
+        else if (field == "title")
         {
             ++b;
+
+            if (b == e)
+            {
+                cout << "Error: Expected title." << endl;
+                break;
+            }
+
             string ttle = *b;
             trim(ttle);
-            it->set_title(ttle);
+            assignment_it->set_title(ttle);
+            updated = true;
         }
-        else if (*b == "description")
+        else if (field == "description")
         {
             ++b;
+
+            if (b == e)
+            {
+                cout << "Error: Expected description." << endl;
+                break;
+            }
+
             string dscrptn = *b;
             trim(dscrptn);
-            it->set_description(dscrptn);
+            assignment_it->set_description(dscrptn);
+            updated = true;
         }
-        else if (*b == "due")
+        else if (field == "due")
         {
             ++b;
+
+            if (b == e)
+            {
+                cout << "Error: Expected due date." << endl;
+                break;
+            }
+
             Date date;
             if (is_date(*b))
             {
                 read_date(*b, date);
-                it->set_due_date(date);
+                assignment_it->set_due_date(date);
+                updated = true;
             }
-            else 
+            else
+            {
+                cout << "Ignored Invalid date: " << *b << endl
+                    << "Expected MM-DD-YYYY" << endl;
+            }
+        }
+        else if (field == "available")
+        {
+            ++b;
+
+            if (b == e)
+            {
+                cout << "Error: Expected availability." << endl;
+                break;
+            }
+            Date date;
+            if (is_date(*b))
+            {
+                read_date(*b, date);
+                assignment_it->set_available_date(date);
+                updated = true;
+            }
+            else
             {
                 cout << "Invalid date: " << *b << endl
                     << "Expected MM-DD-YYYY" << endl;
                 return;
             }
         }
-        else if (*b == "available")
+        else if (field == "complete")
         {
-            ++b;
-            Date date;
-            if (is_date(*b)) 
-            {
-                read_date(*b, date);
-                it->set_available_date(date);
-            } 
-            else 
-            {
-                cout << "Invalid date: " << *b << endl
-                     << "Expected MM-DD-YYYY" << endl;
-                return;
-            }
+            assignment_it->mark_complete();
+            updated = true;
         }
-        else if (*b == "complete")
+        else if (field == "incomplete")
         {
-            it->mark_complete();
-        }
-        else if (*b == "incomplete")
-        {
-            it->set_complete(false);
+            assignment_it->set_complete(false);
+            updated = true;
         }
         else
         {
-            cout << "Unkown command: " << *b << endl;
-            return;
+            cout << "Unkown field: " << *b << endl;
         }
 
         ++b;
@@ -494,7 +601,10 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
     // Save changes, notify user of success.
     sort(data.begin(), data.end());
     write();
-    cout << "Assignment updated." << endl;
+    if (updated)
+    {
+        cout << "Assignment updated." << endl;
+    }
 }
 
 void Tracker::show(vector<string>::const_iterator b, vector<string>::const_iterator e) const
@@ -516,68 +626,75 @@ void Tracker::show(vector<string>::const_iterator b, vector<string>::const_itera
 
 void Tracker::show(unsigned long long id) const
 {
-    vector<Assignment>::const_iterator it = find_if(data.begin(), data.end(), [id](Assignment a) { 
-        return a.get_id() == id; 
-    });
+    vector<Assignment>::const_iterator it = find_if(data.begin(), data.end(), [id](Assignment a) {
+        return a.get_id() == id;
+        });
     if (it == data.end())
     {
         cout << "No assignment found with id: " << id << endl;
         return;
-    }  
+    }
 
     cout << endl << *it << endl << endl;
 }
 
-void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_iterator e) 
+void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_iterator e)
 {
     // If id is present, valid, and an assignment exists with said id, remove the assignment and notify the user.
     // Otherwise, notify the user of the error. Notify the user of any unused arguments.
-    if (b == e) {
+    if (b == e)
+    {
         cout << "Remove aborted. You must specify the ID of the assignment to remove." << endl;
         return;
     }
 
-    if (!is_num(*b)) {
-        cout << "Invalid ID: " << *b << endl;
-        return;
-    }
-
-    unsigned long long id = stoi(*b);
-    
-    vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [id](Assignment a) { 
-        return a.get_id() == id; 
-    });
-    if (it == data.end())
+    if (!confirm_action())
     {
-        cout << "No assignment found with id: " << *b << endl;
         return;
     }
 
-    string title = it->get_title();
+    vector<string> deleted_titles;
+    vector<string> invalid_ids;
+    for (; b != e; ++b)
+    {
+        if (!is_num(*b)) {
+            invalid_ids.push_back(*b);
+            continue;
+        }
 
-    data.erase(it);
+        unsigned long long id = stoi(*b);
+
+        vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [id](Assignment a) {
+            return a.get_id() == id;
+            });
+
+        if (it == data.end())
+        {
+            cout << "No assignment found with id: " << *b << endl;
+            continue;
+        }
+
+        deleted_titles.push_back(it->get_title());
+        data.erase(it);
+    }
+
     write();
 
-    cout << "Deleted: " << title << endl;
-
-    if (++b != e) {
-        string unused;
-        while (b != e) {
-            unused += *b + " ";
-            ++b;
-        }
-        cout << "Unused arguments: " << unused << endl;
+    cout << "Deleted: " << join(deleted_titles, ", ") << endl;
+    if (invalid_ids.size() != 0)
+    {
+        cout << "Invalid Ids: " << join(invalid_ids, ", ") << endl;
     }
 }
 
-void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_iterator e) 
+void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_iterator e)
 {
     if (b == e)
     {
         cout << "You must enter the ID of the assignment you wish to complete." << endl;
         return;
     }
-    
+
     string unused = "";
     unsigned count = 0;
 
@@ -592,7 +709,7 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
         {
             vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) {
                 return a.get_id() == stoi(*b);
-            });
+                });
 
             if (it == data.end())
             {
@@ -610,9 +727,9 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
     write();
     cout << count << " Assignment(s) updated." << endl;
 
-    if (unused != "") 
+    if (unused != "")
     {
-	    cout << "Unused arguments: " << unused << endl;
+        cout << "Unused arguments: " << unused << endl;
     }
 }
 
@@ -632,7 +749,7 @@ void Tracker::get_courses(vector<string>& courses) const
 // Map course to next relevant assignment
 void Tracker::get_courses_map(map<string, Assignment*>& courses)
 {
-    for (Assignment& a : data)  
+    for (Assignment& a : data)
     {
         if (courses.count(a.get_course()) == 1) // Course in map already
         {
@@ -658,37 +775,37 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
     get_courses_map(courses); // Associates course with pointer to next assignment
 
     vector<Assignment*> partitioned_assignments; // Make vector of <Assignment*> from distinct course map values
-    transform(courses.begin(), courses.end(), back_inserter(partitioned_assignments), [](const pair<string, Assignment*>& p) { 
-        return p.second; 
-    });
+    transform(courses.begin(), courses.end(), back_inserter(partitioned_assignments), [](const pair<string, Assignment*>& p) {
+        return p.second;
+        });
 
     sort(partitioned_assignments.begin(), partitioned_assignments.end(), [](Assignment* a, Assignment* b) {
         return *a < *b;
-    });
+        });
 
     vector<Assignment*>::const_iterator upcoming = find_if(partitioned_assignments.begin(), partitioned_assignments.end(), [](const Assignment* a) {
         return !a->past() && !a->completed();
-    });
+        });
 
-    if (b_args == e_args || *b_args != "p") // if list current courses, print currnet courses as table
+    if (b_args == e_args || lowercase(*b_args) != "p") // if list current courses, print currnet courses as table
     {
-        const string::size_type UPCOMING_COURSE_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a){ return a->get_course(); }), string("Course").size());
-        const string::size_type NEXT_ASSIGNMENT_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a){ return a->get_title(); }), string("Next Assignment").size());
+        const string::size_type UPCOMING_COURSE_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a) { return a->get_course(); }), string("Course").size());
+        const string::size_type NEXT_ASSIGNMENT_WIDTH = max(width(upcoming, partitioned_assignments.end(), [](const Assignment* a) { return a->get_title(); }), string("Next Assignment").size());
         const string::size_type DUE_IN_WIDTH = max(
-            width(upcoming, partitioned_assignments.end(), 
-                 [](const Assignment* a)
-                 {
-                     return to_string(days_from_now(a->get_due_date())) + " days";
-                 }), 
+            width(upcoming, partitioned_assignments.end(),
+                [](const Assignment* a)
+                {
+                    return to_string(days_from_now(a->get_due_date())) + " days";
+                }),
             string("Due in").size()
-        );
+                    );
 
         cout << endl << " Course" << string(UPCOMING_COURSE_WIDTH - string("Course").size(), ' ') << " | "
-             << "Next Assignment" << string(NEXT_ASSIGNMENT_WIDTH - string("Next Assignment").size(), ' ') << " | "
-             << "Due in" << endl;
-        
+            << "Next Assignment" << string(NEXT_ASSIGNMENT_WIDTH - string("Next Assignment").size(), ' ') << " | "
+            << "Due in" << endl;
+
         cout << string(UPCOMING_COURSE_WIDTH + 2, '-') << '+' << string(NEXT_ASSIGNMENT_WIDTH + 2, '-') << '+'
-             << string(DUE_IN_WIDTH + 2, '-') << endl;
+            << string(DUE_IN_WIDTH + 2, '-') << endl;
 
         for (vector<Assignment*>::const_iterator it = upcoming; it != partitioned_assignments.end(); ++it)
         {
@@ -697,24 +814,24 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
             const string due_in = to_string(days_from_now((*it)->get_due_date())) + " days";
 
             cout << " " << string(UPCOMING_COURSE_WIDTH - course.size(), ' ') << course << " | "
-                 << string(NEXT_ASSIGNMENT_WIDTH - title.size(), ' ') << title << " | "
-                 << string(DUE_IN_WIDTH - due_in.size(), ' ') << due_in << endl;
+                << string(NEXT_ASSIGNMENT_WIDTH - title.size(), ' ') << title << " | "
+                << string(DUE_IN_WIDTH - due_in.size(), ' ') << due_in << endl;
         }
     }
     cout << endl;
 
-    if (b_args != e_args && ( *b_args == "a" || *b_args == "p")) // if list past courses, print past courses
+    if (b_args != e_args && (lowercase(*b_args) == "a" || lowercase(*b_args) == "p")) // if list past courses, print past courses
     {
         cout << " Past courses:" << endl;
         for (vector<Assignment*>::const_iterator it = partitioned_assignments.begin(); it != upcoming; ++it)
             cout << "   " << (*it)->get_course() << endl;
-        
+
         cout << endl;
     }
 
     if (b_args != e_args) // Notify user of unused arguments
     {
-        if ((*b_args != "a" && *b_args != "p") || (++b_args != e_args))
+        if ((lowercase(*b_args) != "a" && lowercase(*b_args) != "p") || (++b_args != e_args))
         {
             string args;
             while (b_args != e_args)
@@ -727,6 +844,25 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
     }
 }
 
+bool Tracker::confirm_action() const
+{
+    cout << "Are you sure? This cannot be undone. (y/n): ";
+    while (true)
+    {
+        string confirm;
+        cin >> confirm;
+        if (lowercase(confirm) == "n")
+        {
+            return false;
+        }
+        else if (lowercase(confirm) == "y")
+        {
+            return true;
+        }
+        cout << "Pardon? Enter 'y' or 'n': " << endl;
+    }
+}
+
 void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterator e)
 {
     if (b == e) {
@@ -734,13 +870,18 @@ void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterato
         return;
     }
 
+    if (!confirm_action())
+    {
+        return;
+    }
+
     vector<Assignment>::size_type n_before = data.size();
     // Iterate through courses from b to e.
     while (b != e) {
         // Remove assignments associated with the course *b
-        const string& course_name = *b;
+        const string& course_name = lowercase(*b);
         data.erase(
-            remove_if(data.begin(), data.end(), [course_name](const Assignment& a) { return a.get_course() == course_name; }),
+            remove_if(data.begin(), data.end(), [course_name](const Assignment& a) { return lowercase(a.get_course()) == course_name; }),
             data.end()
         );
 
@@ -752,156 +893,207 @@ void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterato
     cout << "Removed " << n_before - data.size() << " assignment(s)" << endl;
 }
 
-void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator e) 
+void Tracker::rc(vector<string>::const_iterator b, vector<string>::const_iterator e)
+{
+    if (b == e)
+    {
+        cout << "Insufficient args: Must provide a course to be renamed, and a new name." << endl;
+        return;
+    }
+    string current_name = *b++;
+    if (b == e)
+    {
+        cout << "Insufficient args: Must provide a course to be renamed, and a new name." << endl;
+        return;
+    }
+    string new_name = *b;
+
+    size_t count = 0;
+    for (vector<Assignment>::iterator assignment = data.begin(); assignment != data.end(); ++assignment)
+    {
+        if (lowercase(assignment->get_course()) == lowercase(current_name))
+        {
+            assignment->set_course(new_name);
+            ++count;
+        }
+    }
+
+    cout << "Updated: " << count << " assignments." << endl;
+
+    if (++b != e)
+    {
+        vector<string> unused;
+        while (b != e)
+        {
+            unused.push_back(*b++);
+        }
+        cout << "Unused arguments: " << join(unused, ", ") << endl;
+    }
+}
+
+void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator e)
 {
     if (b == e)
         cout << " Command | Description\n"
-                "---------+---------------------\n"
-                "    list | displays assignments\n"
-                "    show | displays an assignment\n"
-                "     add | add new assignment\n"
-                "    edit | edit assignment info\n"
-                "  remove | remove assignment\n"
-                "complete | mark complete\n"
-                "      lc | list courses\n"
-                "      dc | delete course\n"
-                "    quit | end program\n\n"
-                "Enter i [command] for more detailed info on a command i.e. |> i list\n\n";
+        "---------+---------------------\n"
+        "    list | displays assignments\n"
+        "    show | displays assignment(s)\n"
+        "     add | add new assignment\n"
+        "    edit | edit assignment info\n"
+        "  remove | remove assignment(s)\n"
+        "complete | mark complete\n"
+        "      lc | list courses\n"
+        "      rc | rename course\n"
+        "      dc | delete course(s)\n"
+        "    quit | end program\n\n"
+        "Enter i [command] for more detailed info on a command i.e. |> i list\n\n";
     else
     {
         static const string LIST = "===============================================\n"
-                                   "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
-                                   "\"Multi word arguments must be enclose in quotes.\"\n\n"
+            "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
+            "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
-                                   "Display assignments using:\n"
-                                   "    list [ past ] [ N ] [ (MM-DD-YYYY | week) ] [ asc | desc ] [ offset N ]\n"
-                                   "         [ (todo | done) ] [ COURSE_NAME... ] [ available ]\n\n"
-                                
-                                   "past\n"
-                                   "        View past assignments.\n\n"
-                                   "N\n"
-                                   "        View the first N assignments from your query.\n"
-                                   "        Must be an integer.\n\n"
-                                   "MM-DD-YYYY\n"
-                                   "        View assignments due up until specified date.\n\n"
-                                   "week\n"
-                                   "        View assignments due this week\n\n"
-                                   "asc\n"
-                                   "        View results in ascending order, by due date.\n" 
-                                   "        This is dones by default, and is therefore redundant.\n\n"
-                                   "desc\n"
-                                   "        View results in descending order, by due date.\n\n"
-                                   "offset N\n"
-                                   "        Skip the first N results. N must be an integer.\n\n"
-                                   "todo\n"
-                                   "        View only unfinished assignments.\n\n"
-                                   "done\n"
-                                   "        View only completed assignments\n\n"
-                                   "[COURSE_NAME...]\n"
-                                   "        View only assignments for course(s)\n\n"
-                                   "available\n"
-                                   "        Filter out unavailable assignments.\n\n"
+            "Display assignments using:\n"
+            "    list [ past ] [ N ] [ (MM-DD-YYYY | week) ] [ asc | desc ] [ offset N ]\n"
+            "         [ (todo | done) ] [ COURSE_NAME... ] [ available ]\n\n"
 
-                                   "i.e.\n"
-                                   "        list\n"
-                                   "        list past 5 desc\n"
-                                   "        list \"CSC 1061\" 07-01-2022\n"
-                                   "        list done offset 4\n"
-                                   "        list week desc 5 \"CSC 1061\" CALC1\n";
-        
+            "past\n"
+            "        View past assignments.\n\n"
+            "N\n"
+            "        View the first N assignments from your query.\n"
+            "        Must be an integer.\n\n"
+            "MM-DD-YYYY\n"
+            "        View assignments due up until specified date.\n\n"
+            "week\n"
+            "        View assignments due this week\n\n"
+            "asc\n"
+            "        View results in ascending order, by due date.\n"
+            "        This is dones by default, and is therefore redundant.\n\n"
+            "desc\n"
+            "        View results in descending order, by due date.\n\n"
+            "offset N\n"
+            "        Skip the first N results. N must be an integer.\n\n"
+            "todo\n"
+            "        View only unfinished assignments.\n\n"
+            "done\n"
+            "        View only completed assignments\n\n"
+            "[COURSE_NAME...]\n"
+            "        View only assignments for course(s)\n\n"
+            "available\n"
+            "        Filter out unavailable assignments.\n\n"
+
+            "i.e.\n"
+            "        list\n"
+            "        list past 5 desc\n"
+            "        list \"CSC 1061\" 07-01-2022\n"
+            "        list done offset 4\n"
+            "        list week desc 5 \"CSC 1061\" CALC1\n";
+
         static const string SHOW = "===============================================\n"
-                                   "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
-                                   "\"Multi word arguments must be enclose in quotes.\"\n\n"
+            "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
+            "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
-                                   "Display details for one or more assignments using:\n"
-                                   "    show (...ID)\n\n"
+            "Display details for one or more assignments using:\n"
+            "    show (...ID)\n\n"
 
-                                   "i.e.\n"
-                                   "        show 1\n"
-                                   "        show 1 5 8\n";
+            "i.e.\n"
+            "        show 1\n"
+            "        show 1 5 8\n";
 
         static const string ADD = "===============================================\n"
-                                  "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
-                                  "\"Multi word arguments must be enclose in quotes.\"\n\n"
+            "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
+            "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
-                                  "Add new assignment using:\n"
-                                  "    add TITLE DESCRIPTION MM-DD-YYYY [ course NAME ] [ available MM-DD-YYYY ]\n\n"
+            "Add new assignment using:\n"
+            "    add TITLE DESCRIPTION MM-DD-YYYY [ course NAME ] [ available MM-DD-YYYY ]\n\n"
 
-                                  "available MM-DD-YYYY defaults to today.\n\n"
+            "available MM-DD-YYYY defaults to today.\n\n"
 
-                                  "i.e.\n"
-                                  "        add \"CH 13 HW\" \"Study the chain rule\" 06-20-2022\n"
-                                  "            course \"CALC 201\" available 06-13-2022\n\n"
+            "i.e.\n"
+            "        add \"CH 13 HW\" \"Study the chain rule\" 06-20-2022\n"
+            "            course \"CALC 201\" available 06-13-2022\n\n"
 
-                                  "        add \"M2 Paper\" \"On Ancient Rome\" 06-20-2022\n"
-                                  "            course \"HIST 320\"\n";
+            "        add \"M2 Paper\" \"On Ancient Rome\" 06-20-2022\n"
+            "            course \"HIST 320\"\n";
 
 
         static const string EDIT = "===============================================\n"
-                                   "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
-                                   "\"Multi word arguments must be enclose in quotes.\"\n\n"
+            "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
+            "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
-                                   "Update an assignment's info using:\n"
-                                   "    edit ID [ title NAME ] [ description \"NEW DESCRIPTION\" ]\n"
-                                   "         [ due MM-DD-YYYY ] [ course NAME ] [ available MM-DD-YYYY ]\n"
-                                   "         [ (complete | incomplete) ]\n\n"
+            "Update an assignment's info using:\n"
+            "    edit ID [ title NAME ] [ description \"NEW DESCRIPTION\" ]\n"
+            "         [ due MM-DD-YYYY ] [ course NAME ] [ available MM-DD-YYYY ]\n"
+            "         [ (complete | incomplete) ]\n\n"
 
-                                   "i.e.\n"
-                                   "        edit 25 due 08-01-2022\n"
-                                   "        edit 9 complete\n";
+            "i.e.\n"
+            "        edit 25 due 08-01-2022\n"
+            "        edit 9 complete\n";
 
         static const string REMOVE = "===============================================\n"
-                                     "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
-                                     "\"Multi word arguments must be enclose in quotes.\"\n\n"
+            "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
+            "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
-                                     "Delete an assignment using:\n"
-                                     "remove ID\n\n"
+            "Delete assignment(s) using:\n"
+            "remove ID...\n\n"
 
-                                     "i.e.\n"
-                                     "          remove 4\n";
+            "i.e.\n"
+            "          remove 4\n";
+        "          remove 2 5";
 
         static const string COMPLETE = "===============================================\n"
-                                       "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
-                                       "\"Multi word arguments must be enclose in quotes.\"\n\n"
+            "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
+            "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
-                                       "Mark assignment complete using:\n"
-                                       "complete ID...\n\n"
+            "Mark assignment complete using:\n"
+            "complete ID...\n\n"
 
-                                       "i.e.\n"
-                                        "       complete 10\n"
-                                        "       complete 2 3 5\n";
+            "i.e.\n"
+            "       complete 10\n"
+            "       complete 2 3 5\n";
 
         static const string LC = "===============================================\n"
-                                 "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
-                                 "\"Multi word arguments must be enclose in quotes.\"\n\n"
-                                 
-                                 "List courses using:\n"
-                                 "      lc [ (a | p) ]\n\n"
+            "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
+            "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
-                                 "a\n"
-                                 "        View all courses.\n\n"
-                                 "p\n"
-                                 "        View past courses.\n\n"
+            "List courses using:\n"
+            "      lc [ (a | p) ]\n\n"
 
-                                 "i.e.\n"
-                                 "      lc\n"
-                                 "      lc a\n"
-                                 "      lc p\n";                               
+            "a\n"
+            "        View all courses.\n\n"
+            "p\n"
+            "        View past courses.\n\n"
+
+            "i.e.\n"
+            "      lc\n"
+            "      lc a\n"
+            "      lc p\n";
+
+        static const string RC = "===============================================\n"
+            "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
+            "\"Multi word arguments must be enclose in quotes.\"\n\n"
+
+            "Rename a course using:\n"
+            "      rc CURRENT_NAME NEW_NAME \n\n"
+
+            "i.e.\n"
+            "      rc history HIST 320\n";
 
         static const string DC = "===============================================\n"
-                                 "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
-                                 "\"Multi word arguments must be enclose in quotes.\"\n\n"
+            "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
+            "\"Multi word arguments must be enclose in quotes.\"\n\n"
 
-                                 "Delete all assignments for a given course using:\n"
-                                 "      dc COURSE\n\n"
+            "Delete all assignments for a given course(s) using:\n"
+            "      dc COURSE...\n\n"
 
-                                 "i.e.\n"
-                                 "      dc CALC 2001\n";
+            "i.e.\n"
+            "      dc \"CALC 2001\"\n"
+            "      dc \"CALC 2001\" HIST320\n";
 
         static const string QUIT = "===============================================\n"
-                                   "End program using:\n"
-	                           "      (quit | end-of-file)\n";
-                                   
+            "End program using:\n"
+            "      (quit | end-of-file)\n";
+
 
         static map<string, string> command_info = {
             {"list", LIST},
@@ -912,14 +1104,15 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
             {"complete", COMPLETE},
             {"lc", LC},
             {"dc", DC},
-            {"quit", QUIT}
+            {"quit", QUIT},
+            {"rc", RC}
         };
 
-        if (command_info.find(*b) == command_info.end()) {
+        if (command_info.find(lowercase(*b)) == command_info.end()) {
             cout << *b << " is not a command." << endl;
             return;
         }
-        
-        cout << command_info[*b] << endl;
+
+        cout << command_info[lowercase(*b)] << endl;
     }
 }

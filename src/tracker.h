@@ -36,8 +36,8 @@ typedef struct AddInfo {
 
 class Tracker
 {
-// Class containing a collection of assignments and operations on those assignments.
-// most public member functions correspond to user commands and are invoked with user specified arguments.
+    // Class containing a collection of assignments and operations on those assignments.
+    // most public member functions correspond to user commands and are invoked with user specified arguments.
 public:
     void read(std::ifstream&);
     // Initialize assignments using input file stream
@@ -67,6 +67,9 @@ public:
     void dc(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
     // Delete all assignments associated with a given course.
 
+    void rc(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
+    // Rename course
+
     void i(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
     // Displays instructions for the user. Displays specific instructions for a specific command if specified.
 
@@ -92,6 +95,7 @@ private:
     unsigned long long next_id = 0;
     std::vector<Assignment> data;
     std::string::size_type width(std::string(const Assignment&)) const;
+    std::string::size_type width(std::vector<std::vector<Assignment>::const_iterator>& assignments, std::string attr(const Assignment&)) const;
     std::string::size_type width(std::vector<Assignment*>::const_iterator, std::vector<Assignment*>::const_iterator, std::string(const Assignment*)) const;
     // returns the appropriate column width for the specified attribute among the relavent assignments
     // used in format_print
@@ -108,7 +112,7 @@ private:
     template<class In, class Out>
     static void read_quoted(In& in, Out out)
     {
-    // Remove enclosing double quotes from string stream
+        // Remove enclosing double quotes from string stream
         std::string temp;
         std::string word;
 
@@ -122,8 +126,8 @@ private:
         copy(temp.begin() + 1, temp.end() - 1, out);
     }
 
-    void trim(std::string&) const;
-    // remove whitespace from beginning and end of string
+    bool confirm_action() const;
+    // Double check user's intentions.
 };
 
 #endif

@@ -7,22 +7,24 @@
 #include <map>
 #include <string>
 #include <cmath>
+#include <algorithm>
+#include "string_utility.h"
 
 using std::cout;        using std::string;
 using std::cin;         using std::vector;
 using std::endl;        using std::to_string;
-// "using namespace std" causes error when invoking Interface::split
+using std::tolower;     using std::back_inserter;
 
 void Interface::run_console()
 {
     static const string V = "0.1.0";
 
     cout << "\nAssignment Tracker " << V << "\n"
-            "Copyright (C) 2022 Duncan Britt\n\n"
-            "Welcome.\n";
+        "Copyright (C) 2022 Duncan Britt\n\n"
+        "Welcome.\n";
 
     Assignment* next_due_assignmet = assignments.next();
-    if (!assignments.completed() && next_due_assignmet != NULL) 
+    if (!assignments.completed() && next_due_assignmet != NULL)
     {
         const int days_til_due = days_from_now(assignments.next()->get_due_date());
         const string in_x_days = days_til_due == 0 ? "today." : "in " + to_string(days_til_due) + " days.";
@@ -32,9 +34,9 @@ void Interface::run_console()
     {
         cout << endl;
     }
-                
+
     cout << "Enter 'i' to display instructions. Enter 'quit' or end-of-file to exit.\n\n"
-         << "atrack(v" << V << ")> ";
+        << "atrack(v" << V << ")> ";
 
     // MAIN PROGRAM LOOP
     // Read. Evaluate. (Print).
@@ -43,10 +45,12 @@ void Interface::run_console()
     while (getline(cin, input))
     {
         args.erase(args.begin(), args.end());
-        string err = Interface::split(input, back_inserter(args), isspace);
+        string err = split(input, back_inserter(args), isspace);
         if (err.size() == 0)
         {
-            if (args.begin() != args.end() && *args.begin() == "quit")
+            string lowercase_command;
+            transform((*args.begin()).begin(), (*args.begin()).end(), back_inserter(lowercase_command), tolower);
+            if (args.begin() != args.end() && lowercase_command == "quit")
             {
                 break;
             }
@@ -67,8 +71,10 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
     if (b == e)
         return;
 
-    string command = *b++;
-    
+    //string command = *b++;
+    string command;
+    transform(b->begin(), b->end(), back_inserter(command), tolower);
+    ++b;
     // Invoke the function corresponding to the user's command
     // Pass the user-specified arguments
     if (command == "list")
@@ -85,6 +91,8 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
         assignments.complete(b, e);
     else if (command == "lc")
         assignments.lc(b, e);
+    else if (command == "rc")
+        assignments.rc(b, e);
     else if (command == "dc")
         assignments.dc(b, e);
     else if (command == "i")
