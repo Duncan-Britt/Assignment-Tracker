@@ -209,6 +209,11 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
         if (find_if(courses.begin(), courses.end(), [course_name](const string& saved_course) {
             return course_name == lowercase(saved_course); }) == courses.end())
         {
+            if (regex_match(course_name, regex("[0-9]{2}-[0-9]{2}-[0-9]{4}")))
+            {
+                cout << "Is this: '" << course_name << "' supposed to be a date? Something doesn't look right." << endl;
+            }
+
             cout << "Unknown course: " << course_name << endl;
         }
     }
@@ -479,15 +484,20 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
         cout << "Invalid ID: " << *b << endl;
         return;
     }
-    vector<Assignment>::iterator assignment_it = find_if(data.begin(), data.end(), [b](Assignment a) {
-        try
-        {
-            return a.get_id() == stoi(*b);
-        }
-        catch (...)
-        {
-            return false;
-        }
+
+    unsigned long long input_id;
+    try
+    {
+        input_id = stoi(*b);
+    }
+    catch (...)
+    {
+        cout << "Error: ID out of range." << endl;
+        return;
+    }
+
+    vector<Assignment>::iterator assignment_it = find_if(data.begin(), data.end(), [input_id](Assignment a) {
+        return a.get_id() == input_id;
     });
 
     if (assignment_it == data.end())
@@ -497,6 +507,14 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
     }
 
     ++b;
+
+    if (b == e)
+    {
+        cout << "ERROR: You must specify the field(s) you wish to change." << endl;
+        vector<string> i_args{ "edit" };
+        i(i_args.begin(), i_args.end());
+        return;
+    }
 
     // edit the specified fields of a specified assignment.
     // Notify the user if input is in error
