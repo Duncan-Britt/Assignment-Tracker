@@ -48,9 +48,7 @@ void Interface::run_console()
         string err = split(input, back_inserter(args), isspace);
         if (err.size() == 0)
         {
-            string lowercase_command;
-            transform((*args.begin()).begin(), (*args.begin()).end(), back_inserter(lowercase_command), tolower);
-            if (args.begin() != args.end() && lowercase_command == "quit")
+            if (args.begin() != args.end() && lowercase(*(args.begin())) == "quit")
             {
                 break;
             }
@@ -69,12 +67,12 @@ void Interface::run_console()
 void Interface::eval(vector<string>::const_iterator b, vector<string>::const_iterator e)
 {
     if (b == e)
+    {
         return;
+    }
 
-    //string command = *b++;
-    string command;
-    transform(b->begin(), b->end(), back_inserter(command), tolower);
-    ++b;
+    string command = lowercase(*b++);
+
     // Invoke the function corresponding to the user's command
     // Pass the user-specified arguments
     if (command == "list")

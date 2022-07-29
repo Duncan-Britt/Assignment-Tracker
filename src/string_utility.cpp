@@ -22,3 +22,19 @@ void trim(string& s)
     s.erase(s.begin(), find_if(s.begin(), s.end(), [](char c) { return !isspace(c); }));
     s.erase(find_if(s.rbegin(), s.rend(), [](char c) { return !isspace(c); }).base(), s.end());
 }
+
+string lowercase(const string& s)
+{
+    string res;
+    transform(s.begin(), s.end(), back_inserter(res), [](int c) {
+        if (isalpha((char)c))
+        {
+            return (int)tolower((char)c);
+        }
+        else
+        {
+            return (int)c;
+        }
+        });
+    return res;
+}

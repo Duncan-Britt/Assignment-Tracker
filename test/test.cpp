@@ -11,6 +11,7 @@
 #include "../src/date.h"
 #include "../src/tracker.h"
 #include "../src/interface.h"
+#include "../src/string_utility.h"
 
 // Use ASSERT when it doesn't make sense to continue
 // Otherwise, use EXPECT
@@ -90,9 +91,9 @@ TEST(DateTests, ReadDate)
 TEST(SplitTests, EmptyString)
 {
     std::vector<std::string> strs;
-    Interface::split("", back_inserter(strs), isspace);
+    split("", back_inserter(strs), isspace);
     EXPECT_EQ(strs.size(), 0);
-    EXPECT_EQ(Interface::split("", back_inserter(strs), [](char c) {
+    EXPECT_EQ(split("", back_inserter(strs), [](char c) {
     	return c == ' ';
     }), "");
     EXPECT_EQ(strs.size(), 0);
@@ -101,13 +102,13 @@ TEST(SplitTests, EmptyString)
 TEST(SplitTests, NonEmptyStrings)
 {
     std::vector<std::string> strs;    
-    EXPECT_EQ(Interface::split("Hello \"cruel world\"", back_inserter(strs), isspace), "");
+    EXPECT_EQ(split("Hello \"cruel world\"", back_inserter(strs), isspace), "");
 
     std::vector<std::string> expected = std::vector<std::string> {"Hello", "cruel world"};
     EXPECT_EQ(strs, expected);
 
     strs.erase(strs.begin(), strs.end());
-    EXPECT_EQ(Interface::split(" Hello--\"how-do- you-do\"-World", back_inserter(strs), [](char c) {
+    EXPECT_EQ(split(" Hello--\"how-do- you-do\"-World", back_inserter(strs), [](char c) {
 	return c == '-';
     }), "");
     

@@ -64,4 +64,7 @@ std::string join(const std::vector<std::string>&, const std::string&);
 void trim(std::string&);
 // remove whitespace from beginning and end of string
 
+std::string lowercase(const std::string& s);
+// Return lowercase version of string. Ignores nonalphabetical characters.
+
 #endif

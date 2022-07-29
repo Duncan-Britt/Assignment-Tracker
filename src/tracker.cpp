@@ -18,22 +18,6 @@ using namespace std;
 typedef struct tm Date;
 typedef vector<Assignment>::const_iterator iter;
 
-string lowercase(const string& s)
-{
-    string res;
-    transform(s.begin(), s.end(), back_inserter(res), [](int c) {
-        if (isalpha((char)c))
-        {
-            return (int)tolower((char)c);
-        }
-        else
-        {
-            return (int)c;
-        }
-        });
-    return res;
-}
-
 int isdash(int c) // needs to return int, not bool
 {
     return c == '-';
@@ -195,6 +179,7 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
         }
 
         if (options.limit_date)
+        {
             if (!options.list_descending && before(options.date_limit, b->get_due_date()))
             {
                 break;
@@ -203,6 +188,7 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
             {
                 continue;
             }
+        }
         if (offset > 0)
         {
             --offset;
@@ -292,8 +278,8 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
             else
             {
                 info.course = it->get_course();
-                ++b;
             }
+            ++b;
         }
         else if (lowercase(*b) == "available")
         {
@@ -465,7 +451,8 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
     }
     vector<Assignment>::iterator assignment_it = find_if(data.begin(), data.end(), [b](Assignment a) {
         return a.get_id() == stoi(*b);
-        });
+    });
+
     if (assignment_it == data.end())
     {
         cout << "No assignment found with id: " << *b << endl;
@@ -496,7 +483,22 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
             vector<Assignment>::iterator found = find_if(data.begin(), data.end(), [crse](Assignment a) { return lowercase(a.get_course()) == lowercase(crse); });
             if (found != data.end())
             {
-                assignment_it->set_course(found->get_course());
+                if (lowercase(assignment_it->get_course()) == lowercase(crse))
+                {
+                    cout << "You attempted to change the course associated with assignment " 
+                         << assignment_it->get_id() << " from " << assignment_it->get_course() << " to "
+                         << crse << ". Distinct courses are case-insensitive. If you want to rename the course, try rc:"
+                         << endl; 
+                    
+                    vector<string> i_args = {"rc"};
+                    i(i_args.begin(), i_args.end());
+
+                    break;
+                }
+                else
+                {
+                    assignment_it->set_course(found->get_course());   
+                }
             }
             else
             {
@@ -554,7 +556,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
             else
             {
                 cout << "Ignored Invalid date: " << *b << endl
-                    << "Expected MM-DD-YYYY" << endl;
+                     << "Expected MM-DD-YYYY" << endl;
             }
         }
         else if (field == "available")
@@ -609,16 +611,20 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
 void Tracker::show(vector<string>::const_iterator b, vector<string>::const_iterator e) const
 {
-    if (b == e) {
+    if (b == e) 
+    {
         cout << "Show aborted. You must specify the ID of the desired assignment." << endl;
         return;
     }
 
-    while (b != e) {
-        if (is_num(*b)) {
+    while (b != e) 
+    {
+        if (is_num(*b)) 
+        {
             show(stoi(*b++));
         }
-        else {
+        else 
+        {
             cout << "Invalid id: " << *b++ << endl;
         }
     }
@@ -628,7 +634,7 @@ void Tracker::show(unsigned long long id) const
 {
     vector<Assignment>::const_iterator it = find_if(data.begin(), data.end(), [id](Assignment a) {
         return a.get_id() == id;
-        });
+    });
     if (it == data.end())
     {
         cout << "No assignment found with id: " << id << endl;
@@ -657,7 +663,8 @@ void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_ite
     vector<string> invalid_ids;
     for (; b != e; ++b)
     {
-        if (!is_num(*b)) {
+        if (!is_num(*b)) 
+        {
             invalid_ids.push_back(*b);
             continue;
         }
@@ -666,7 +673,7 @@ void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_ite
 
         vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [id](Assignment a) {
             return a.get_id() == id;
-            });
+        });
 
         if (it == data.end())
         {
@@ -754,10 +761,12 @@ void Tracker::get_courses_map(map<string, Assignment*>& courses)
         if (courses.count(a.get_course()) == 1) // Course in map already
         {
             if (!a.past() && !a.completed()) {
-                if (courses[a.get_course()]->past() || courses[a.get_course()]->completed()) {
+                if (courses[a.get_course()]->past() || courses[a.get_course()]->completed()) 
+                {
                     courses[a.get_course()] = &a;
                 }
-                else if (before(a.get_due_date(), courses[a.get_course()]->get_due_date())) {
+                else if (before(a.get_due_date(), courses[a.get_course()]->get_due_date())) 
+                {
                     courses[a.get_course()] = &a;
                 }
             }
@@ -777,15 +786,15 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
     vector<Assignment*> partitioned_assignments; // Make vector of <Assignment*> from distinct course map values
     transform(courses.begin(), courses.end(), back_inserter(partitioned_assignments), [](const pair<string, Assignment*>& p) {
         return p.second;
-        });
+    });
 
     sort(partitioned_assignments.begin(), partitioned_assignments.end(), [](Assignment* a, Assignment* b) {
         return *a < *b;
-        });
+    });
 
     vector<Assignment*>::const_iterator upcoming = find_if(partitioned_assignments.begin(), partitioned_assignments.end(), [](const Assignment* a) {
         return !a->past() && !a->completed();
-        });
+    });
 
     if (b_args == e_args || lowercase(*b_args) != "p") // if list current courses, print currnet courses as table
     {
@@ -798,11 +807,11 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
                     return to_string(days_from_now(a->get_due_date())) + " days";
                 }),
             string("Due in").size()
-                    );
+        );
 
         cout << endl << " Course" << string(UPCOMING_COURSE_WIDTH - string("Course").size(), ' ') << " | "
-            << "Next Assignment" << string(NEXT_ASSIGNMENT_WIDTH - string("Next Assignment").size(), ' ') << " | "
-            << "Due in" << endl;
+             << "Next Assignment" << string(NEXT_ASSIGNMENT_WIDTH - string("Next Assignment").size(), ' ') << " | "
+             << "Due in" << endl;
 
         cout << string(UPCOMING_COURSE_WIDTH + 2, '-') << '+' << string(NEXT_ASSIGNMENT_WIDTH + 2, '-') << '+'
             << string(DUE_IN_WIDTH + 2, '-') << endl;
@@ -814,8 +823,8 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
             const string due_in = to_string(days_from_now((*it)->get_due_date())) + " days";
 
             cout << " " << string(UPCOMING_COURSE_WIDTH - course.size(), ' ') << course << " | "
-                << string(NEXT_ASSIGNMENT_WIDTH - title.size(), ' ') << title << " | "
-                << string(DUE_IN_WIDTH - due_in.size(), ' ') << due_in << endl;
+                 << string(NEXT_ASSIGNMENT_WIDTH - title.size(), ' ') << title << " | "
+                 << string(DUE_IN_WIDTH - due_in.size(), ' ') << due_in << endl;
         }
     }
     cout << endl;
@@ -877,7 +886,8 @@ void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterato
 
     vector<Assignment>::size_type n_before = data.size();
     // Iterate through courses from b to e.
-    while (b != e) {
+    while (b != e) 
+    {
         // Remove assignments associated with the course *b
         const string& course_name = lowercase(*b);
         data.erase(
@@ -1038,8 +1048,8 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
             "remove ID...\n\n"
 
             "i.e.\n"
-            "          remove 4\n";
-        "          remove 2 5";
+            "          remove 4\n"
+            "          remove 2 5";
 
         static const string COMPLETE = "===============================================\n"
             "command argment (either | or) [ optional ] DATA (ONE_OR_MORE...)\n"
