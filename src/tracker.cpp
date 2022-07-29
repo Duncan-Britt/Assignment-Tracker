@@ -14,6 +14,7 @@
 #include "string_utility.h"
 
 using namespace std;
+using std::cout; // without this, VS complains of ambiguity when using cout;
 
 typedef struct tm Date;
 typedef vector<Assignment>::const_iterator iter;
@@ -267,6 +268,18 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
             string course_name = *b;
             trim(course_name);
 
+            if (is_num(course_name))
+            {
+                cout << "Error: Course name cannot be a number." << endl;
+                return false;
+            }
+
+            if (is_date(course_name))
+            {
+                cout << "Error: Course Name cannot be a date." << endl;
+                return false;
+            }
+
             // if course exists, preserve existing case
             vector<Assignment>::const_iterator it = find_if(data.begin(), data.end(), [course_name](Assignment a) {
                 return lowercase(a.get_course()) == lowercase(course_name);
@@ -329,7 +342,16 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
             read_date(*arg_it, options.date_limit);
         }
         else if (is_num(*arg_it))
-            options.limit = stoi(*arg_it);
+        {
+            try
+            {
+                options.limit = stoi(*arg_it);
+            }
+            catch (...)
+            {
+                // Such a large limit would not realistically restrict the range, so can be ignored completely.
+            }
+        }
         else if (lowercase(*arg_it) == "todo")
             options.list_done = false;
         else if (lowercase(*arg_it) == "done")
@@ -345,7 +367,15 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
             {
                 if (is_num(*arg_it))
                 {
-                    options.offset = stoi(*arg_it);
+                    try
+                    {
+                        options.offset = stoi(*arg_it);
+                    }
+                    catch (...)
+                    {
+                        cout << "Error: " << *arg_it << " is out of range. Ignored offset." << endl;
+                    }
+                    
                 }
                 else
                 {
@@ -450,7 +480,14 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
         return;
     }
     vector<Assignment>::iterator assignment_it = find_if(data.begin(), data.end(), [b](Assignment a) {
-        return a.get_id() == stoi(*b);
+        try
+        {
+            return a.get_id() == stoi(*b);
+        }
+        catch (...)
+        {
+            return false;
+        }
     });
 
     if (assignment_it == data.end())
@@ -479,6 +516,19 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
             string crse = *b;
             trim(crse);
+
+            if (is_num(crse))
+            {
+                cout << "Error: Course name cannot be a number." << endl;
+                break;
+            }
+
+            if (is_date(crse))
+            {
+                cout << "Error: Course Name cannot be a date." << endl;
+                break;
+            }
+
             // if course exists already, preserve case of existing course.
             vector<Assignment>::iterator found = find_if(data.begin(), data.end(), [crse](Assignment a) { return lowercase(a.get_course()) == lowercase(crse); });
             if (found != data.end())
@@ -621,7 +671,15 @@ void Tracker::show(vector<string>::const_iterator b, vector<string>::const_itera
     {
         if (is_num(*b)) 
         {
-            show(stoi(*b++));
+            try
+            {
+                show(stoi(*b));
+            }
+            catch (...)
+            {
+                cout << "ID: " << *b << " is out of range." << endl;
+            }
+            ++b;
         }
         else 
         {
@@ -669,7 +727,17 @@ void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_ite
             continue;
         }
 
-        unsigned long long id = stoi(*b);
+        unsigned long long id;
+        try 
+        {
+            id = stoi(*b);
+        }
+        catch (...)
+        {
+            invalid_ids.push_back(*b);
+            cout << "Error- ID out of range: " << *b << endl;
+            continue;
+        }
 
         vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [id](Assignment a) {
             return a.get_id() == id;
@@ -687,7 +755,11 @@ void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_ite
 
     write();
 
-    cout << "Deleted: " << join(deleted_titles, ", ") << endl;
+    if (deleted_titles.size() != 0)
+    {
+        cout << "Deleted: " << join(deleted_titles, ", ") << endl;
+    }
+    
     if (invalid_ids.size() != 0)
     {
         cout << "Invalid Ids: " << join(invalid_ids, ", ") << endl;
@@ -704,6 +776,8 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
 
     string unused = "";
     unsigned count = 0;
+    unsigned unchanged = 0;
+    map<string, bool> previous;
 
     // Validate assignment ids and mark assignments complete. Track how many assignments are updated.
     while (b != e)
@@ -712,11 +786,18 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
         {
             unused += *b + " ";
         }
-        else
+        else if (!previous[*b])
         {
             vector<Assignment>::iterator it = find_if(data.begin(), data.end(), [b](Assignment a) {
-                return a.get_id() == stoi(*b);
-                });
+                try
+                {
+                    return a.get_id() == stoi(*b);
+                }
+                catch (...)
+                {
+                    return false;
+                }
+            });
 
             if (it == data.end())
             {
@@ -724,15 +805,31 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
             }
             else
             {
-                ++count;
-                it->mark_complete();
+                if (it->completed())
+                {
+                    ++unchanged;
+                }
+                else
+                {
+                    ++count;
+                    it->mark_complete();
+                }
             }
         }
+        previous[*b] = true;
         ++b;
     }
     sort(data.begin(), data.end());
     write();
-    cout << count << " Assignment(s) updated." << endl;
+    if (count != 0)
+    {
+        cout << count << " Assignment(s) updated." << endl;
+    }
+
+    if (unchanged != 0)
+    {
+        cout << unchanged << " Assignment(s) unchanged." << endl;
+    }
 
     if (unused != "")
     {
@@ -856,20 +953,30 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
 bool Tracker::confirm_action() const
 {
     cout << "Are you sure? This cannot be undone. (y/n): ";
-    while (true)
+    bool confirmation;
+    bool invalid = true;
+    while (invalid)
     {
         string confirm;
-        cin >> confirm;
+        getline(cin, confirm);
+
         if (lowercase(confirm) == "n")
         {
-            return false;
+            confirmation = false;
+            invalid = false;
         }
         else if (lowercase(confirm) == "y")
         {
-            return true;
+            confirmation = true;
+            invalid = false;
         }
-        cout << "Pardon? Enter 'y' or 'n': " << endl;
+        else
+        {
+            cout << "Pardon? Enter 'y' or 'n': ";
+        }
     }
+
+    return confirmation;
 }
 
 void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterator e)
@@ -917,6 +1024,18 @@ void Tracker::rc(vector<string>::const_iterator b, vector<string>::const_iterato
         return;
     }
     string new_name = *b;
+
+    if (is_num(new_name))
+    {
+        cout << "Error: Course name cannot be a number." << endl;
+        return;
+    }
+
+    if (is_date(new_name))
+    {
+        cout << "Error: Course name cannot be a date." << endl;
+        return;
+    }
 
     size_t count = 0;
     for (vector<Assignment>::iterator assignment = data.begin(); assignment != data.end(); ++assignment)

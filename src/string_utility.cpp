@@ -3,6 +3,7 @@
 #include <vector>
 #include <iterator>
 #include <sstream>
+#include <algorithm>
 
 using std::string;
 using std::vector;
