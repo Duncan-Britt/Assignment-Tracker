@@ -70,7 +70,7 @@ public:
     void rc(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
     // Rename course
 
-    void i(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
+    void i(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator) const;
     // Displays instructions for the user. Displays specific instructions for a specific command if specified.
 
     static bool is_num(const std::string&);

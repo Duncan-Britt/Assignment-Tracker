@@ -12,6 +12,7 @@
 #include <cctype>
 #include "date.h"
 #include "string_utility.h"
+#include "font.h"
 
 using namespace std;
 using std::cout; // without this, VS complains of ambiguity when using cout;
@@ -211,10 +212,10 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
         {
             if (regex_match(course_name, regex("[0-9]{2}-[0-9]{2}-[0-9]{4}")))
             {
-                cout << "Is this: '" << course_name << "' supposed to be a date? Something doesn't look right." << endl;
+                cout << "Is " << Fonts::highlight << course_name << Fonts::norm << " supposed to be a date? Something doesn't look right." << endl;
             }
 
-            cout << "Unknown course: " << course_name << endl;
+            cout << Fonts::error << "Unknown course: " << Fonts::highlight << course_name << endl;
         }
     }
 }
@@ -229,31 +230,33 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
     // turn user arguments into a data structure (info) with the relavent needed by Tracker::add
     if (b == e)
     {
-        cout << "Insufficient args. Enter i add for more info." << endl;
+        cout << Fonts::error << "Error: " << Fonts::norm << "Insufficient args. Enter i add for more info." << endl;
         return false;
     }
     if (b->size() == 0)
     {
-        cout << "Assignment title must not be empty." << endl;
+        cout << Fonts::error << "Error: " << Fonts::norm << "Assignment title must not be empty." << endl;
         return false;
     }
     info.title = *b++;
     if (b == e)
     {
-        cout << "Insufficient args. Enter i add for more info." << endl;
+        cout << Fonts::error << "Error : " << Fonts::norm << "Insufficient args. " << endl;
+        vector<string> i_args{ "add" };
+        i(i_args.begin(), i_args.end());
         return false;
     }
     info.description = *b++;
 
     if (b == e)
     {
-        cout << "Insufficient args. Enter i add for more info." << endl;
+        cout << Fonts::error << "Error: " << Fonts::norm << "Insufficient args. Enter 'i add' for more info." << endl;
         return false;
     }
 
     if (!is_date(*b)) {
-        cout << "Malformed due date: " << *b << endl
-            << "Expected MM-DD-YYYY" << endl;
+        cout << Fonts::error << "Error: " << Fonts::norm << "Malformed due date: " << Fonts::highlight << *b << endl
+             << Fonts::norm << "Expected MM-DD-YYYY" << endl;
         return false;
     }
 
@@ -266,7 +269,7 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
             ++b;
             if (b == e)
             {
-                cout << "Error: Expected course name." << endl;
+                cout << Fonts::error << "Error:" << Fonts::norm << " Expected course name." << endl;
                 return false;
             }
 
@@ -275,13 +278,13 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
 
             if (is_num(course_name))
             {
-                cout << "Error: Course name cannot be a number." << endl;
+                cout << Fonts::error << "Error: " << Fonts::norm << "Course name cannot be a number." << endl;
                 return false;
             }
 
             if (is_date(course_name))
             {
-                cout << "Error: Course Name cannot be a date." << endl;
+                cout << Fonts::error << "Error: " << Fonts::norm << "Course Name cannot be a date." << endl;
                 return false;
             }
 
@@ -304,14 +307,14 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
             ++b;
             if (b == e)
             {
-                cout << "Error: Expected availability: MM-DD-YYYY" << endl;
+                cout << Fonts::error << "Error:" << Fonts::highlight << " Expected availability: MM-DD-YYYY" << endl;
                 return false;
             }
 
             if (!is_date(*b))
             {
-                cout << "Malformed due date: " << *b << endl
-                    << "Expected MM-DD-YYYY" << endl;
+                cout << Fonts::error << "Error: " << Fonts::norm << "Malformed due date: " << Fonts::highlight << *b << endl
+                     << Fonts::norm << "Expected MM-DD-YYYY" << endl;
                 return false;
             }
 
@@ -319,7 +322,7 @@ bool Tracker::read_args_add(vector<string>::const_iterator b, vector<string>::co
         }
         else
         {
-            cout << "Unkowned argument: " << *b << endl;
+            cout << Fonts::error << "Unkowned argument: " << Fonts::norm << *b << endl;
             return false;
         }
     }
@@ -378,18 +381,18 @@ void Tracker::read_args_list(vector<string>::const_iterator arg_it, vector<strin
                     }
                     catch (...)
                     {
-                        cout << "Error: " << *arg_it << " is out of range. Ignored offset." << endl;
+                        cout << Fonts::error << "Error: " << Fonts::highlight << *arg_it << Fonts::norm << " is out of range. Ignored offset." << endl;
                     }
                     
                 }
                 else
                 {
-                    cout << "Expected " << *arg_it << " to be an integer." << endl;
+                    cout << Fonts::error << "Error: " << Fonts::norm << "Expected " << Fonts::highlight << *arg_it << Fonts::norm << " to be an integer."  << endl;
                 }
             }
             else
             {
-                cout << "Expected [N] after arg: offset" << endl;
+                cout << Fonts::error << "Error: " << Fonts::norm << "Expected [N] after arg: offset" << endl;
                 return;
             }
         }
@@ -411,11 +414,11 @@ void Tracker::format_print(vector<iter>& assignments) const
     const string::size_type ID_WIDTH = max(width(assignments, [](const Assignment& a) { return to_string(a.get_id()); }), string("ID").size());
 
     // Print column headings with appropriate whitespace
-    cout << " " << "Title" << string(TITLE_WIDTH - string("title").size(), ' ') << " | "
-        << "ID" << string(ID_WIDTH - string("ID").size(), ' ') << " | "
-        << "Course" << string(COURSE_WIDTH - string("Course").size(), ' ') << " | "
-        << "Due" << string(DATE_WIDTH - string("Due").size(), ' ') << " | "
-        << "Available  | Complete" << endl;
+    cout << Fonts::highlight << " " << "Title" << string(TITLE_WIDTH - string("title").size(), ' ') << Fonts::norm << " | "
+         << Fonts::highlight << "ID" << string(ID_WIDTH - string("ID").size(), ' ') << Fonts::norm << " | "
+         << Fonts::highlight << "Course" << string(COURSE_WIDTH - string("Course").size(), ' ') << Fonts::norm << " | "
+         << Fonts::highlight << "Due" << string(DATE_WIDTH - string("Due").size(), ' ') << Fonts::norm << " | "
+         << Fonts::highlight << "Available  | Complete" << Fonts::norm << endl;
 
     // Print spacer
     cout << string(TITLE_WIDTH + 2, '-') << '+' << string(ID_WIDTH + 2, '-') << '+'
@@ -432,6 +435,7 @@ void Tracker::format_print(vector<iter>& assignments) const
         string available = (*it)->get_available();
         string completed = (*it)->completed() ? "Y" : "N";
         string id = to_string((*it)->get_id());
+        Fonts::Font completion_font = (*it)->completed() ? Fonts::success : Fonts::error;
 
         if (title.size() > TITLE_WIDTH)
         {
@@ -441,7 +445,7 @@ void Tracker::format_print(vector<iter>& assignments) const
         cout << " " << string(TITLE_WIDTH - title.size(), ' ') << title << " | "
             << string(ID_WIDTH - id.size(), ' ') << id << " | " << string(COURSE_WIDTH - course.size(), ' ') << course << " | "
             << due << " | " << available << " | " << string(string("Complete").size() - 3, ' ')
-            << completed << endl;
+            << completion_font << completed << Fonts::norm << endl;
     }
     cout << endl << endl;
 }
@@ -465,7 +469,7 @@ void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterat
         data.push_back(Assignment(next_id++, false, info.title, info.description, info.course, info.due, info.available));
         sort(data.begin(), data.end());
         write();
-        cout << "Added " << info.title << endl;
+        cout << Fonts::success << "Added " << info.title << Fonts::norm << endl;
     }
 }
 
@@ -474,14 +478,15 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
     // Validate ID
     if (b == e)
     {
-        cout << "You must specify the ID of the assignment to edit, and what you would like to change." << endl;
-        cout << "Enter i edit for more information." << endl;
+        cout << Fonts::error << "Error: " << Fonts::norm << "You must specify the ID of the assignment to edit, and what you would like to change." << endl;
+        vector<string> i_args{ "edit" };
+        i(i_args.begin(), i_args.end());cout << "Enter i edit for more information." << endl;
         return;
     }
 
     if (!is_num(*b))
     {
-        cout << "Invalid ID: " << *b << endl;
+        cout << Fonts::error << "Invalid ID: " << Fonts::highlight << *b << Fonts::norm << endl;
         return;
     }
 
@@ -492,7 +497,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
     }
     catch (...)
     {
-        cout << "Error: ID out of range." << endl;
+        cout << Fonts::error << "Error:" << Fonts::norm << " ID out of range." << endl;
         return;
     }
 
@@ -502,7 +507,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
     if (assignment_it == data.end())
     {
-        cout << "No assignment found with id: " << *b << endl;
+        cout << Fonts::error << "No assignment found with id: " << Fonts::highlight << *b << Fonts::norm << endl;
         return;
     }
 
@@ -510,7 +515,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
     if (b == e)
     {
-        cout << "ERROR: You must specify the field(s) you wish to change." << endl;
+        cout << Fonts::error << "Error:" << Fonts::norm << " You must specify the field(s) you wish to change." << endl;
         vector<string> i_args{ "edit" };
         i(i_args.begin(), i_args.end());
         return;
@@ -528,7 +533,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
             if (b == e)
             {
-                cout << "Error: Expected course name." << endl;
+                cout << Fonts::error << "Error: " << Fonts::norm << "Expected course name." << endl;
                 break;
             }
 
@@ -537,13 +542,13 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
             if (is_num(crse))
             {
-                cout << "Error: Course name cannot be a number." << endl;
+                cout << Fonts::error << "Error:" << Fonts::norm << " Course name cannot be an integer." << endl;
                 break;
             }
 
             if (is_date(crse))
             {
-                cout << "Error: Course Name cannot be a date." << endl;
+                cout << Fonts::error << "Error:" << Fonts::norm << " Course Name cannot be a date." << endl;
                 break;
             }
 
@@ -553,10 +558,11 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
             {
                 if (lowercase(assignment_it->get_course()) == lowercase(crse))
                 {
-                    cout << "You attempted to change the course associated with assignment " 
-                         << assignment_it->get_id() << " from " << assignment_it->get_course() << " to "
-                         << crse << ". Distinct courses are case-insensitive. If you want to rename the course, try rc:"
-                         << endl; 
+                    cout << "You attempted to change the course associated with assignment " << Fonts::highlight
+                         << assignment_it->get_id() << Fonts::norm << " from " << Fonts::highlight << assignment_it->get_course() 
+                         << Fonts::norm << " to " << Fonts::highlight << crse << Fonts::norm
+                         << ". Distinct courses are case-insensitive. If you want to rename the course, try " << Fonts::highlight << "rc:" 
+                         << Fonts::norm << endl; 
                     
                     vector<string> i_args = {"rc"};
                     i(i_args.begin(), i_args.end());
@@ -580,7 +586,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
             if (b == e)
             {
-                cout << "Error: Expected title." << endl;
+                cout << Fonts::error << "Error:" << Fonts::norm << " Expected title." << endl;
                 break;
             }
 
@@ -595,7 +601,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
             if (b == e)
             {
-                cout << "Error: Expected description." << endl;
+                cout << Fonts::error << "Error:" << Fonts::norm << " Expected description." << endl;
                 break;
             }
 
@@ -610,7 +616,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
             if (b == e)
             {
-                cout << "Error: Expected due date." << endl;
+                cout << Fonts::error << "Error:" << Fonts::norm << " Expected due date." << endl;
                 break;
             }
 
@@ -623,8 +629,8 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
             }
             else
             {
-                cout << "Ignored Invalid date: " << *b << endl
-                     << "Expected MM-DD-YYYY" << endl;
+                cout << Fonts::error << "Ignored Invalid date: " << Fonts::highlight << *b << endl
+                     << Fonts::norm << "Expected MM-DD-YYYY" << endl;
             }
         }
         else if (field == "available")
@@ -633,7 +639,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
 
             if (b == e)
             {
-                cout << "Error: Expected availability." << endl;
+                cout << Fonts::error << "Error:" << Fonts::norm << " Expected availability MM-DD-YYYY" << endl;
                 break;
             }
             Date date;
@@ -645,8 +651,8 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
             }
             else
             {
-                cout << "Invalid date: " << *b << endl
-                    << "Expected MM-DD-YYYY" << endl;
+                cout << Fonts::error << "Invalid date: " << Fonts::highlight << *b << endl
+                     << Fonts::norm << "Expected MM-DD-YYYY" << endl;
                 return;
             }
         }
@@ -662,7 +668,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
         }
         else
         {
-            cout << "Unkown field: " << *b << endl;
+            cout << Fonts::error << "Unkown field: " << Fonts::highlight << *b << Fonts::norm << endl;
         }
 
         ++b;
@@ -673,7 +679,7 @@ void Tracker::edit(vector<string>::const_iterator b, vector<string>::const_itera
     write();
     if (updated)
     {
-        cout << "Assignment updated." << endl;
+        cout << Fonts::success << "Assignment updated." << Fonts::norm << endl;
     }
 }
 
@@ -681,7 +687,7 @@ void Tracker::show(vector<string>::const_iterator b, vector<string>::const_itera
 {
     if (b == e) 
     {
-        cout << "Show aborted. You must specify the ID of the desired assignment." << endl;
+        cout << Fonts::error << "Show aborted." << Fonts::norm << " You must specify the ID of the desired assignment." << endl;
         return;
     }
 
@@ -695,13 +701,13 @@ void Tracker::show(vector<string>::const_iterator b, vector<string>::const_itera
             }
             catch (...)
             {
-                cout << "ID: " << *b << " is out of range." << endl;
+                cout << Fonts::error << "Error: " << Fonts::norm << "ID " << Fonts::highlight << *b << Fonts::norm << " is out of range." << endl;
             }
             ++b;
         }
         else 
         {
-            cout << "Invalid id: " << *b++ << endl;
+            cout << Fonts::error << "Invalid id: " << Fonts::norm << *b++ << endl;
         }
     }
 }
@@ -713,7 +719,7 @@ void Tracker::show(unsigned long long id) const
     });
     if (it == data.end())
     {
-        cout << "No assignment found with id: " << id << endl;
+        cout << Fonts::error << "Error: " << Fonts::norm << "No assignment found with id: " << Fonts::highlight << id << Fonts::norm << endl;
         return;
     }
 
@@ -726,7 +732,7 @@ void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_ite
     // Otherwise, notify the user of the error. Notify the user of any unused arguments.
     if (b == e)
     {
-        cout << "Remove aborted. You must specify the ID of the assignment to remove." << endl;
+        cout << Fonts::error << "Remove aborted." << Fonts::norm << " You must specify the ID of the assignment to remove." << endl;
         return;
     }
 
@@ -753,7 +759,7 @@ void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_ite
         catch (...)
         {
             invalid_ids.push_back(*b);
-            cout << "Error- ID out of range: " << *b << endl;
+            cout << Fonts::error << "Error:" << Fonts::norm << " ID out of range: " << *b << endl;
             continue;
         }
 
@@ -763,7 +769,7 @@ void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_ite
 
         if (it == data.end())
         {
-            cout << "No assignment found with id: " << *b << endl;
+            cout << Fonts::error << "Error: " << Fonts::norm << "No assignment found with id: " << *b << endl;
             continue;
         }
 
@@ -775,12 +781,12 @@ void Tracker::remove(vector<string>::const_iterator b, vector<string>::const_ite
 
     if (deleted_titles.size() != 0)
     {
-        cout << "Deleted: " << join(deleted_titles, ", ") << endl;
+        cout << Fonts::success << "Deleted: " << Fonts::norm << join(deleted_titles, ", ") << endl;
     }
     
     if (invalid_ids.size() != 0)
     {
-        cout << "Invalid Ids: " << join(invalid_ids, ", ") << endl;
+        cout << Fonts::error << "Invalid Ids: " << Fonts::norm << join(invalid_ids, ", ") << endl;
     }
 }
 
@@ -819,7 +825,8 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
 
             if (it == data.end())
             {
-                cout << "No assignment found with id: " << *b << endl;
+                cout << Fonts::error << "Error: " << Fonts::norm << "No assignment found with id: " << Fonts::highlight << *b << Fonts::norm << endl;
+                unused += *b + " ";
             }
             else
             {
@@ -841,7 +848,7 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
     write();
     if (count != 0)
     {
-        cout << count << " Assignment(s) updated." << endl;
+        cout << Fonts::success << count << " Assignment(s) updated." << Fonts::norm << endl;
     }
 
     if (unchanged != 0)
@@ -851,7 +858,7 @@ void Tracker::complete(vector<string>::const_iterator b, vector<string>::const_i
 
     if (unused != "")
     {
-        cout << "Unused arguments: " << unused << endl;
+        cout << Fonts::error << "Unused arguments: " << Fonts::norm << unused << endl;
     }
 }
 
@@ -962,7 +969,7 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
             {
                 args += *b_args++ + " ";
             }
-            cout << endl << "Unused args: " << args << endl;
+            cout << endl << Fonts::error << "Unused args: " << Fonts::norm << args << endl;
             cout << "lc accepts one argument, either 'a' or 'p'." << endl;
         }
     }
@@ -970,7 +977,7 @@ void Tracker::lc(std::vector<std::string>::const_iterator b_args, std::vector<st
 
 bool Tracker::confirm_action() const
 {
-    cout << "Are you sure? This cannot be undone. (y/n): ";
+    cout << Fonts::highlight << "Are you sure? This cannot be undone. (y/n): " << Fonts::norm;
     bool confirmation;
     bool invalid = true;
     while (invalid)
@@ -1000,7 +1007,7 @@ bool Tracker::confirm_action() const
 void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterator e)
 {
     if (b == e) {
-        cout << "Aborted. You must specifiy a course to be removed." << endl;
+        cout << Fonts::error << "Aborted." << Fonts::norm << " You must specifiy a course to be removed." << endl;
         return;
     }
 
@@ -1025,33 +1032,33 @@ void Tracker::dc(vector<string>::const_iterator b, vector<string>::const_iterato
 
     write(); // Save changes
 
-    cout << "Removed " << n_before - data.size() << " assignment(s)" << endl;
+    cout << Fonts::success << "Removed " << n_before - data.size() << " assignment(s)" << Fonts::norm << endl;
 }
 
 void Tracker::rc(vector<string>::const_iterator b, vector<string>::const_iterator e)
 {
     if (b == e)
     {
-        cout << "Insufficient args: Must provide a course to be renamed, and a new name." << endl;
+        cout << Fonts::error << "Insufficient args: " << Fonts::norm << "Must provide a course to be renamed, and a new name." << endl;
         return;
     }
     string current_name = *b++;
     if (b == e)
     {
-        cout << "Insufficient args: Must provide a course to be renamed, and a new name." << endl;
+        cout << Fonts::error << "Insufficient args: " << Fonts::norm << "Must provide a course to be renamed, and a new name." << endl;
         return;
     }
     string new_name = *b;
 
     if (is_num(new_name))
     {
-        cout << "Error: Course name cannot be a number." << endl;
+        cout << Fonts::error << "Error:" << Fonts::norm << " Course name cannot be a number." << endl;
         return;
     }
 
     if (is_date(new_name))
     {
-        cout << "Error: Course name cannot be a date." << endl;
+        cout << Fonts::error << "Error:" << Fonts::norm << " Course name cannot be a date." << endl;
         return;
     }
 
@@ -1065,7 +1072,7 @@ void Tracker::rc(vector<string>::const_iterator b, vector<string>::const_iterato
         }
     }
 
-    cout << "Updated: " << count << " assignments." << endl;
+    cout << Fonts::success << "Updated: " << count << " assignments." << Fonts::norm << endl;
 
     if (++b != e)
     {
@@ -1074,11 +1081,11 @@ void Tracker::rc(vector<string>::const_iterator b, vector<string>::const_iterato
         {
             unused.push_back(*b++);
         }
-        cout << "Unused arguments: " << join(unused, ", ") << endl;
+        cout << Fonts::error << "Unused arguments: " << Fonts::norm << join(unused, ", ") << endl;
     }
 }
 
-void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator e)
+void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator e) const
 {
     if (b == e)
         cout << " Command | Description\n"
@@ -1256,7 +1263,7 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
         };
 
         if (command_info.find(lowercase(*b)) == command_info.end()) {
-            cout << *b << " is not a command." << endl;
+            cout << Fonts::error << "Error: " << Fonts::highlight << *b << Fonts::norm << " is not a command." << endl;
             return;
         }
 

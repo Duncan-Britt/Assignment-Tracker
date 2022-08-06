@@ -9,6 +9,7 @@
 #include <cmath>
 #include <algorithm>
 #include "string_utility.h"
+#include "font.h"
 
 using std::cout;        using std::string;
 using std::cin;         using std::vector;
@@ -19,16 +20,17 @@ void Interface::run_console()
 {
     static const string V = "0.1.0";
 
-    cout << "\nAssignment Tracker " << V << "\n"
-        "Copyright (C) 2022 Duncan Britt\n\n"
-        "Welcome.\n";
+    cout << Fonts::heading << "\nAssignment Tracker " << V << "\n"
+         "Copyright (C) 2022 Duncan Britt\n\n"
+         << Fonts::norm << "Welcome.\n";
 
     Assignment* next_due_assignmet = assignments.next();
     if (!assignments.completed() && next_due_assignmet != NULL)
     {
         const int days_til_due = days_from_now(assignments.next()->get_due_date());
-        const string in_x_days = days_til_due == 0 ? "today." : "in " + to_string(days_til_due) + " days.";
-        cout << "You're next assignment is due " << in_x_days << endl;
+        const string in_x_days = days_til_due == 0 ? "today." : (days_til_due == 1 ? "tomorrow." : "in " + to_string(days_til_due) + " days.");
+        Fonts::Font font = (days_til_due == 0 || days_til_due == 1) ? Fonts::error : Fonts::success;
+        cout << "You're next assignment is " << font << "due " << in_x_days << Fonts::norm << endl;
     }
     else
     {
@@ -36,7 +38,7 @@ void Interface::run_console()
     }
 
     cout << "Enter 'i' to display instructions. Enter 'quit' or end-of-file to exit.\n\n"
-        << "atrack(v" << V << ")> ";
+         << Fonts::prompt <<"> " << Fonts::input;
 
     // MAIN PROGRAM LOOP
     // Read. Evaluate. (Print).
@@ -44,6 +46,7 @@ void Interface::run_console()
     vector<string> args;
     while (getline(cin, input))
     {
+        cout << Fonts::norm;
         args.erase(args.begin(), args.end());
         string err = split(input, back_inserter(args), isspace);
         if (err.size() == 0)
@@ -57,10 +60,10 @@ void Interface::run_console()
         }
         else
         {
-            cout << err << endl;
+            cout << Fonts::error << err << Fonts::norm << endl;
         }
-
-        cout << "atrack(v" << V << ")> ";
+        
+        cout << Fonts::prompt << "> " << Fonts::input;
     }
 }
 
@@ -96,5 +99,5 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
     else if (command == "i")
         assignments.i(b, e);
     else
-        cout << "command not found: " << command << endl;
+        cout << Fonts::error << "command not found: " << Fonts::norm << "'" << command << "'" << endl;
 }

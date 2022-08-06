@@ -24,9 +24,10 @@ add_library(interface STATIC src/interface.cpp)
 add_library(tracker STATIC src/tracker.cpp)
 add_library(date STATIC src/date.cpp)
 add_library(string_utility STATIC src/string_utility.cpp)
+add_library(font STATIC src/font.cpp)
 
 add_executable(app src/main.cpp)
-target_link_libraries(app assignment interface tracker date string_utility)
+target_link_libraries(app assignment interface tracker date string_utility font)
 
 add_executable(test test/test.cpp)
-target_link_libraries(test date assignment interface tracker gtest_main)
+target_link_libraries(test date assignment interface tracker string_utility font gtest_main)

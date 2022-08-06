@@ -2,6 +2,7 @@
 #include "date.h"
 #include <iostream>
 #include <stdio.h>
+#include "font.h"
 
 using namespace std;
 
@@ -50,18 +51,21 @@ string Assignment::get_available() const
 
 std::ostream& operator<<(std::ostream& out, const Assignment& assignment)
 {
-    out << assignment.get_course() << ": " << assignment.get_title() << endl
+    Fonts::Font completion_font = assignment.completed() ? Fonts::success : Fonts::error;
+
+    out << Fonts::heading << assignment.get_course() << ": " << Fonts::prompt << assignment.get_title() << Fonts::norm << endl
         << assignment.get_description() << endl
-        << "Status: " << (assignment.completed() ? "Complete" : "Incomplete") << endl;
+        << Fonts::heading << "Status: " << completion_font << (assignment.completed() ? "Complete" : "Incomplete") << Fonts::norm << endl;
 
     if (assignment.past()) {
         return out << "Was due : " << assignment.get_due();
     }
 
     unsigned due_in = days_from_now(assignment.get_due_date());
+    out << Fonts::Font(Fonts::Font::FG_MAGENTA);
     if (due_in == 0) {
-        return out << "Due today.";
+        return out << "Due today." << Fonts::norm;
     }
 
-    return out << "Due in " << due_in << " days.";
+    return out << "Due in " << due_in << " days." << Fonts::norm;
 }
