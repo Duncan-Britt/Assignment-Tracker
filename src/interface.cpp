@@ -80,7 +80,11 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
     // Pass the user-specified arguments
     if (command == "list")
         assignments.list(b, e);
+    else if (command == "ls")
+        assignments.list(b, e);
     else if (command == "show")
+        assignments.show(b, e);
+    else if (command == "cd")
         assignments.show(b, e);
     else if (command == "add")
         assignments.add(b, e);
@@ -88,11 +92,15 @@ void Interface::eval(vector<string>::const_iterator b, vector<string>::const_ite
         assignments.edit(b, e);
     else if (command == "remove")
         assignments.remove(b, e);
+    else if (command == "rm")
+        assignments.remove(b, e);
     else if (command == "complete")
         assignments.complete(b, e);
     else if (command == "lc")
         assignments.lc(b, e);
     else if (command == "rc")
+        assignments.rc(b, e);
+    else if (command == "rename")
         assignments.rc(b, e);
     else if (command == "dc")
         assignments.dc(b, e);

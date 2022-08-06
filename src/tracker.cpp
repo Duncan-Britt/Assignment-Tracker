@@ -1251,15 +1251,19 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
 
         static map<string, string> command_info = {
             {"list", LIST},
+            {"ls", LIST},
             {"show", SHOW},
+            {"cd", SHOW},
             {"add", ADD},
             {"edit", EDIT},
             {"remove", REMOVE},
+            {"rm", REMOVE},
             {"complete", COMPLETE},
             {"lc", LC},
             {"dc", DC},
             {"quit", QUIT},
-            {"rc", RC}
+            {"rc", RC},
+            {"rename", RC}
         };
 
         if (command_info.find(lowercase(*b)) == command_info.end()) {
@@ -1267,6 +1271,15 @@ void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator
             return;
         }
 
-        cout << command_info[lowercase(*b)] << endl;
+        cout << command_info[lowercase(*b)] << endl; // ADD UNUSED ARGUMENT HANDLING
+        if (++b != e)
+        {
+            vector<string> unused;
+            while (b != e)
+            {
+                unused.push_back(*b++);
+            }
+            cout << Fonts::error << "Unused arguments: " << Fonts::norm << join(unused, ", ") << endl;
+        }
     }
 }
