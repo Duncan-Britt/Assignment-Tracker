@@ -13,6 +13,7 @@
 #include "date.h"
 #include "string_utility.h"
 #include "font.h"
+#include <filesystem>
 
 using namespace std;
 using std::cout; // without this, VS complains of ambiguity when using cout;
@@ -450,9 +451,33 @@ void Tracker::format_print(vector<iter>& assignments) const
     cout << endl << endl;
 }
 
+// #if defined _MSC_VER
+//     #include <direct.h>
+// #elif defined __GNUC__
+//     #include <sys/types.h>
+//     #include <sys/stat.h>
+// #endif
+
+// void createDir(string dir) {
+//     #if defined _MSC_VER
+//         _mkdir(dir.data());
+//     #elif defined __GNUC__
+//         mkdir(dir.data(), 0777);
+//     #endif
+// }
+
 void Tracker::write() const
 {
-    ofstream ofs("data.txt");
+    char* HOME = (char *) malloc(500);
+    HOME = getenv("HOME");
+    std::string home(HOME);
+    std::filesystem::path data_path(home + "/atrack/assets/data.txt");
+    if (!std::filesystem::exists(data_path))
+    {
+        std::filesystem::create_directories(data_path.parent_path());
+    }
+
+    ofstream ofs(data_path);
     for (vector<Assignment>::const_iterator it = data.begin(); it < data.end(); ++it)
     {
         ofs << it->get_id() << ' ' << it->completed() << " \"" << it->get_title() << '\"'

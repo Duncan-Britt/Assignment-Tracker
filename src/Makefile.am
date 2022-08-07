@@ -1,4 +1,4 @@
-AM_CXXFLAGS=-std=c++14
+AM_CXXFLAGS=-std=c++17
 
 bin_PROGRAMS = atrack
 atrack_SOURCES = main.cpp tracker.cpp interface.cpp assignment.cpp date.cpp string_utility.cpp font.cpp

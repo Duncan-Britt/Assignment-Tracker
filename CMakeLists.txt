@@ -17,7 +17,7 @@ if(NOT google_test_POPULATED)
        add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BUILD_DIR})
 endif()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 add_library(assignment STATIC src/assignment.cpp)
 add_library(interface STATIC src/interface.cpp)

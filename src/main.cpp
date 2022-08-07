@@ -1,7 +1,3 @@
-// Duncan Britt
-// CSC 1061 Capstone Project
-// July 29, 2022
-
 #include <iostream>
 #include "interface.h"
 #include "assignment.h"
@@ -14,6 +10,7 @@ using namespace std;
 #include <direct.h>
 #define pause system("pause")
 #define path_suffix ""
+#define path_to_data ""
 
 char* get_dir(char* buffer, size_t size)
 {
@@ -24,6 +21,7 @@ char* get_dir(char* buffer, size_t size)
 #include <unistd.h>
 #define pause
 #define path_suffix "/"
+//#define path_to_data "/usr/local/atrack/assets/data.txt"
 
 char* get_dir(char* buffer, size_t size)
 {
@@ -37,7 +35,11 @@ char* get_dir(char* buffer, size_t size)
 // Includes some error handling incase saved data becomes corrupted somehow.
 int main(int argc, char** argv)
 {
-    ifstream saved("data.txt");
+    char* HOME = (char *) malloc(500);
+    HOME = getenv("HOME");
+    std::string home(HOME);
+
+    ifstream saved(home + "/atrack/assets/data.txt");
 
     Tracker assignments;
     try
