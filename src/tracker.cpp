@@ -477,9 +477,10 @@ void Tracker::write() const
     getenv_s(&len2, HOMEPATH, 1, "HOMEPATH");
     strcat_s(HOME, (sizeof HOME), HOMEPATH);
     std::string full_path = std::string(HOME) + "\\atrack\\assets\\data.txt";
-#elif
-    size_t len;
-    HOME = getenv_s(&len, HOME, 1, "HOME");
+#else
+    //size_t len;
+    //HOME = getenv_s(&len, HOME, 1, "HOME");
+    HOME = getenv("HOME");
     std::string full_path = std::string(HOME) + "/atrack/assets/data.txt";
 #endif
     std::filesystem::path data_path(full_path);
@@ -496,8 +497,8 @@ void Tracker::write() const
             << it->get_due() << ' ' << it->get_available() << endl;
     }
 
-    free(HOME);
 #ifdef _WIN32
+    free(HOME);
     free(HOMEPATH);
 #endif
 }

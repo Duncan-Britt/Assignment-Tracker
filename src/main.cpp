@@ -44,9 +44,10 @@ int main(int argc, char** argv)
     getenv_s(&len2, HOMEPATH, 1, "HOMEPATH");
     strcat_s(HOME, (sizeof HOME), HOMEPATH);
     std::string full_path = std::string(HOME) + "\\atrack\\assets\\data.txt";
-#elif
-    size_t len;
-    HOME = getenv_s(&len, HOME, 1, "HOME");
+#else
+    //size_t len;
+    //HOME = getenv_s(&len, HOME, 1, "HOME");
+    HOME = getenv("HOME");
     std::string full_path = std::string(HOME) + "/atrack/assets/data.txt";
 #endif
     ifstream saved(full_path);
@@ -72,8 +73,8 @@ int main(int argc, char** argv)
     app.run_console();
     cout << "\nTa-ta for now!\n\n";
     
-    free(HOME);
 #ifdef _WIN32
+    free(HOME);
     free(HOMEPATH);
 #endif
     pause;
