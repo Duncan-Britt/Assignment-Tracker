@@ -16,10 +16,11 @@ public:
 
     Interface(Tracker a) : assignments(a) {}
 	// Constructor. Stores assignments as member
-private:
-    Tracker assignments;
+
     void eval(std::vector<std::string>::const_iterator, std::vector<std::string>::const_iterator);
 	// pass the user's command an arguments to the appropriate member function of assignments.
+private:
+    Tracker assignments;
 };
 
 #endif

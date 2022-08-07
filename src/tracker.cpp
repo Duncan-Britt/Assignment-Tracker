@@ -135,6 +135,7 @@ void Tracker::list(vector<string>::const_iterator arg_it, vector<string>::const_
     // convert user arguments into legible data structure
     ListOptions options;
     options.limit = data.size();
+
     read_args_list(arg_it, arg_end, options);
 
     // Reverse order of assignments if displaying in descending order
@@ -1114,6 +1115,7 @@ void Tracker::rc(vector<string>::const_iterator b, vector<string>::const_iterato
         }
     }
 
+    write();
     cout << Fonts::success << "Updated: " << count << " assignments." << Fonts::norm << endl;
 
     if (++b != e)

@@ -3,6 +3,8 @@
 #include "assignment.h"
 #include "tracker.h"
 #include <fstream>
+#include <vector>
+#include <string>
 
 using namespace std;
 
@@ -70,8 +72,20 @@ int main(int argc, char** argv)
 
     Interface app(assignments);
 
-    app.run_console();
-    cout << "\nTa-ta for now!\n\n";
+    if (argc == 1)
+    {
+        app.run_console();
+        cout << "\nTa-ta for now!\n\n";
+    }
+    else
+    {
+        vector<string> args;
+        for (size_t i = 1; i != argc; ++i)
+        {
+            args.push_back(string(argv[i]));
+        }
+        app.eval(args.begin(), args.end());
+    }
     
 #ifdef _WIN32
     free(HOME);
