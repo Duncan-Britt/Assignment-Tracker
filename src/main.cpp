@@ -35,12 +35,21 @@ char* get_dir(char* buffer, size_t size)
 // Includes some error handling incase saved data becomes corrupted somehow.
 int main(int argc, char** argv)
 {
-    char* HOME = (char *) malloc(500);
-    HOME = getenv("HOME");
-    std::string home(HOME);
-
-    ifstream saved(home + "/atrack/assets/data.txt");
-
+    char* HOME = (char *) malloc(sizeof(char) * 500);
+#ifdef _WIN32
+    size_t len;
+    getenv_s(&len, HOME, 1, "HOMEDRIVE");
+    char* HOMEPATH = (char*)malloc(sizeof(char) * 500);
+    size_t len2;
+    getenv_s(&len2, HOMEPATH, 1, "HOMEPATH");
+    strcat_s(HOME, (sizeof HOME), HOMEPATH);
+    std::string full_path = std::string(HOME) + "\\atrack\\assets\\data.txt";
+#elif
+    size_t len;
+    HOME = getenv_s(&len, HOME, 1, "HOME");
+    std::string full_path = std::string(HOME) + "/atrack/assets/data.txt";
+#endif
+    ifstream saved(full_path);
     Tracker assignments;
     try
     {
@@ -62,7 +71,11 @@ int main(int argc, char** argv)
 
     app.run_console();
     cout << "\nTa-ta for now!\n\n";
-
+    
+    free(HOME);
+#ifdef _WIN32
+    free(HOMEPATH);
+#endif
     pause;
     return 0;
 }

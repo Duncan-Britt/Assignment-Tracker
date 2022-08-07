@@ -468,10 +468,21 @@ void Tracker::format_print(vector<iter>& assignments) const
 
 void Tracker::write() const
 {
-    char* HOME = (char *) malloc(500);
-    HOME = getenv("HOME");
-    std::string home(HOME);
-    std::filesystem::path data_path(home + "/atrack/assets/data.txt");
+    char* HOME = (char*)malloc(sizeof(char) * 500);
+#ifdef _WIN32
+    size_t len;
+    getenv_s(&len, HOME, 1, "HOMEDRIVE");
+    char* HOMEPATH = (char*)malloc(sizeof(char) * 500);
+    size_t len2;
+    getenv_s(&len2, HOMEPATH, 1, "HOMEPATH");
+    strcat_s(HOME, (sizeof HOME), HOMEPATH);
+    std::string full_path = std::string(HOME) + "\\atrack\\assets\\data.txt";
+#elif
+    size_t len;
+    HOME = getenv_s(&len, HOME, 1, "HOME");
+    std::string full_path = std::string(HOME) + "/atrack/assets/data.txt";
+#endif
+    std::filesystem::path data_path(full_path);
     if (!std::filesystem::exists(data_path))
     {
         std::filesystem::create_directories(data_path.parent_path());
@@ -484,6 +495,11 @@ void Tracker::write() const
             << " \"" << it->_get_description() << "\" \"" << it->get_course() << "\" "
             << it->get_due() << ' ' << it->get_available() << endl;
     }
+
+    free(HOME);
+#ifdef _WIN32
+    free(HOMEPATH);
+#endif
 }
 
 void Tracker::add(vector<string>::const_iterator b, vector<string>::const_iterator e)
