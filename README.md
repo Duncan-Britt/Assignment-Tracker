@@ -1,7 +1,7 @@
 # Assignment-Tracker
 For keeping track of your assignments. 
 
-[![Run on Repl.it](https://replit.com/badge/github/Duncan-Britt/Assignment-Tracker)](https://replit.com/@DuncanBritt/Assignment-Tracker)
+[![Demo on Repl.it](https://replit.com/badge/github/Duncan-Britt/Assignment-Tracker)](https://replit.com/@DuncanBritt/Assignment-Tracker)
 
 I was frustrated by my college's online learning platform not allowing me to see all my upcoming assignments for all courses in one place. This command line application is my solution to that problem. The program allows you to perform all your basic CRUD operations using a concise and flexible query language which enables you to 
 - filter your results by course(s)
@@ -13,7 +13,16 @@ I was frustrated by my college's online learning platform not allowing me to see
 - filter out assignments which are available for you to start working on
 - view past assignments.
 
-Example use:
+## Installation
+Navigate to releases to download the latest release.
+
+### MacOS/Linux
+Download the tar archive. Unzip the tar archive using `tar -xvf [filename]`. CD into the unzipped folder. From the command line (in your terminal application on mac) run `./configure` and then `make` and finally `make install`.
+
+### Windows
+Download the setup wizard file ending in .msi. Execute the program.
+
+## Example use:
 
 ```
 Assignment Tracker 0.1.0
