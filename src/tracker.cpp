@@ -1132,19 +1132,19 @@ void Tracker::rc(vector<string>::const_iterator b, vector<string>::const_iterato
 void Tracker::i(vector<string>::const_iterator b, vector<string>::const_iterator e) const
 {
     if (b == e)
-        cout << " Command | Description\n"
-        "---------+---------------------\n"
-        "    list | displays assignments\n"
-        "    show | displays assignment(s)\n"
-        "     add | add new assignment\n"
-        "    edit | edit assignment info\n"
-        "  remove | remove assignment(s)\n"
-        "complete | mark complete\n"
-        "      lc | list courses\n"
-        "      rc | rename course\n"
-        "      dc | delete course(s)\n"
-        "    quit | end program\n\n"
-        "Enter i [command] for more detailed info on a command i.e. |> i list\n\n";
+        cout << " Command | Description            | Aliases\n"
+                "---------+------------------------+---------\n"
+                "    list | displays assignments   | ls\n"
+                "    show | displays assignment(s) | cd\n"
+                "     add | add new assignment     |\n"
+                "    edit | edit assignment info   |\n"
+                "  remove | remove assignment(s)   | rm\n"
+                "complete | mark complete          |\n"
+                "      lc | list courses           |\n"
+                "      rc | rename course          | rename\n"
+                "      dc | delete course(s)       |\n"
+                "    quit | end program            |\n\n"
+                "Enter i [command] for more detailed info on a command i.e. 'i list'\n\n";
     else
     {
         static const string LIST = "===============================================\n"
