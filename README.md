@@ -14,7 +14,7 @@ I was frustrated by my college's online learning platform not allowing me to see
 - view past assignments.
 
 ## Installation
-Navigate to [releases](https://github.com/Duncan-Britt/Assignment-Tracker/releases) to download the latest release.
+Navigate to <a href="https://github.com/Duncan-Britt/Assignment-Tracker/releases" target="_blank">releases</a> to download the latest release.
 
 ### MacOS/Linux
 Download the tar archive. From the command line, navigate to your downloaded tar.gz file and unzip the tar archive using `tar -xvf [filename]`. CD into the unzipped folder. Run `./configure` and then `make` and finally `make install`.
