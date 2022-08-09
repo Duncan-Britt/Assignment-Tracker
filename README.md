@@ -17,7 +17,7 @@ I was frustrated by my college's online learning platform not allowing me to see
 Navigate to releases to download the latest release.
 
 ### MacOS/Linux
-Download the tar archive. Unzip the tar archive using `tar -xvf [filename]`. CD into the unzipped folder. From the command line (in your terminal application on mac) run `./configure` and then `make` and finally `make install`.
+Download the tar archive. Unzip the tar archive using `tar -xvf [filename]`. From the command line (your terminal application on mac) CD into the unzipped folder. Run `./configure` and then `make` and finally `make install`.
 
 ### Windows
 Download the setup wizard file ending in .msi. Execute the program.
