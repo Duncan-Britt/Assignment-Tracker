@@ -20,7 +20,7 @@ Navigate to [releases](https://github.com/Duncan-Britt/Assignment-Tracker/releas
 Download the tar archive. From the command line, navigate to your downloaded tar.gz file and unzip the tar archive using `tar -xvf [filename]`. CD into the unzipped folder. Run `./configure` and then `make` and finally `make install`.
 
 ### Windows
-Download the setup wizard file ending in .msi. Execute the program.
+Windows is not currently supported.
 
 ## Example use:
 
