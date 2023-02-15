@@ -1,7 +1,7 @@
 # Assignment-Tracker
 For keeping track of your school work. 
 
-[![Demo on Repl.it](https://replit.com/badge/github/Duncan-Britt/Assignment-Tracker)](https://replit.com/@DuncanBritt/Assignment-Tracker)
+[Demo on Repl.it](https://replit.com/@DuncanBritt/Assignment-Tracker)
 
 This command-line application is my solution to my frustration with my college's online learning platform not providing the ability for me to see my upcoming assignments for all classes conveniently and in one place. The program allows you to perform all your basic CRUD operations that you would expect from a todo-list app using a concise and flexible query language which enables you to 
 - filter your results by course(s)
