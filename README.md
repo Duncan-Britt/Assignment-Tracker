@@ -1,5 +1,5 @@
 # Assignment-Tracker
-For keeping track of your school work. 
+For keeping track of your school work.
 
 [Demo on Repl.it](https://replit.com/@DuncanBritt/Assignment-Tracker)
 
